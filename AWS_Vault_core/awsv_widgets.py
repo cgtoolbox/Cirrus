@@ -2,6 +2,7 @@ import os
 import sys
 import datetime
 import time
+import tempfile
 
 from PySide2 import QtGui
 from PySide2 import QtWidgets
@@ -21,6 +22,60 @@ if exe in ["hindie", "houdinicore", "hescape", "houdinifx"]:
 else:
     IS_HOUDINI = False
 
+class ProjectSelector(QtWidgets.QWidget):
+
+    def __init__(self, parent=None):
+        super(ProjectSelector, self).__init__(parent=parent)
+        
+        self.main_ui = parent
+        
+        main_layout = QtWidgets.QVBoxLayout()
+        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
+                           QtWidgets.QSizePolicy.Expanding)
+        main_layout.setAlignment(QtCore.Qt.AlignCenter)
+        
+        self.open_project_button = QtWidgets.QPushButton(" Open a root folder")
+        self.open_project_button.setIconSize(QtCore.QSize(64, 64))
+        self.open_project_button.setIcon(QtGui.QIcon(ICONS + "folder_open.svg"))
+        self.open_project_button.clicked.connect(self.main_ui.init_root)
+        self.open_project_button.setFlat(True)
+        self.open_project_button.setStyleSheet("""QPushButton{background-color: transparent}
+                                                  QPushButton:hover{background-color: rgba(90, 90, 185, 80)}""")
+        self.open_project_button.setContentsMargins(10,10,10,10)
+        main_layout.addWidget(self.open_project_button)
+
+        self.history_layout = QtWidgets.QVBoxLayout()
+        main_layout.addLayout(self.history_layout)
+
+        self.setLayout(main_layout)
+
+        self.init_history()
+
+    def init_history(self):
+
+        history = tempfile.gettempdir() + os.sep + "aws_vault_projects"
+        if not os.path.exists(history): return
+
+        with open(history, 'r') as f:
+            history_files = [n.replace('\n', '') for n in f.readlines()]
+
+        for history_path in history_files:
+            if not os.path.exists(history_path):
+                continue
+
+            history_path = history_path.replace('\\', '/')
+            btn = QtWidgets.QPushButton(history_path)
+            btn.setStyleSheet("""QPushButton{background-color: transparent;
+                                             color: #a2a4b4;
+                                             border: 0px}
+                                 QPushButton:hover{color: #c4c6d7}""")
+            btn.clicked.connect(lambda v=history_path: self.init_root_from_history(v))
+            self.history_layout.addWidget(btn)
+
+    def init_root_from_history(self, path):
+
+        self.main_ui.init_root(path)
+
 class ActivityWidget(QtWidgets.QWidget):
 
     def __init__(self, *args):
@@ -39,6 +94,52 @@ class ActivityWidget(QtWidgets.QWidget):
         self.main_layout.addWidget(self.movie_screen)
         self.setLayout(self.main_layout)
         self.movie.start()
+
+class MessageInput(QtWidgets.QDialog):
+
+    def __init__(self, is_mandatory=False, parent=None):
+        super(MessageInput, self).__init__(parent=parent)
+
+        self.setWindowTitle("Message")
+        self.message = ""
+
+        main_layout = QtWidgets.QVBoxLayout()
+        if is_mandatory:
+            msg = "Enter a message ( mantadory ):"
+        else:
+            msg = "Enter a message:"
+        self.lbl = QtWidgets.QLabel(msg)
+        main_layout.addWidget(self.lbl)
+
+        self.text_edit = QtWidgets.QTextEdit()
+        main_layout.addWidget(self.text_edit)
+
+        buttons_layout = QtWidgets.QHBoxLayout()
+        self.valid_btn = QtWidgets.QPushButton("Ok")
+        self.valid_btn.clicked.connect(self.valid)
+        self.close_btn = QtWidgets.QPushButton("Cancel")
+        self.close_btn.clicked.connect(self.close)
+        buttons_layout.addWidget(self.valid_btn)
+        buttons_layout.addWidget(self.close_btn)
+        main_layout.addLayout(buttons_layout)
+
+        self.setLayout(main_layout)
+
+        self.is_mandatory = is_mandatory
+
+        self.setStyleSheet("""QLabel{background-color: transparent}
+                              QTextEdit{background-color: #1a1a1a;
+                                        color: #f2f2f2}""")
+
+    def valid(self):
+
+        msg = self.text_edit.toPlainText()
+        if msg.replace(' ', '') == "" and self.is_mandatory:
+            QtWidgets.QMessageBox.warning(self, "Warning", "Message is empty")
+            return
+
+        self.message = msg
+        self.close()
 
 class PathBarDelimiter(QtWidgets.QLabel):
 
@@ -235,7 +336,13 @@ class PanelFile(PanelFolder):
         
         self.setStyleSheet("""QFrame{background-color: #3e5975}
                               QFrame:hover{background-color: #4d6b89}""")
-        self.ico.setPixmap(QtGui.QIcon(ICONS + "document.svg").pixmap(28, 28))
+
+        file_extension = self.path.split('.')[-1]
+        icon = ICONS + "file_types/" + file_extension + ".svg"
+        if not os.path.exists(icon):
+            self.ico.setPixmap(QtGui.QIcon(ICONS + "document.svg").pixmap(28, 28))
+        else:
+            self.ico.setPixmap(QtGui.QIcon(icon).pixmap(28, 28))
 
         self.upload_progress = QtWidgets.QProgressBar()
         self.upload_progress.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
@@ -345,13 +452,22 @@ class PanelFile(PanelFolder):
                                     buttons = QtWidgets.QMessageBox.StandardButton.Yes|\
                                               QtWidgets.QMessageBox.StandardButton.No,
                                     parent=self)
+        geo = ask.frameGeometry()
+        
+        ask.move(QtGui.QCursor.pos() - ( geo.topRight() * 3 ))
         ask.setStyleSheet("""QMessageBox{background-color: #3e5975}
                              QFrame{background-color: #3e5975}
                              QLabel{background-color: #3e5975}""")
         
         if ask.exec_() == QtWidgets.QMessageBox.StandardButton.No: return
-        self.upload_progress.setVisible(True)
         
+        ask_msg = MessageInput(parent=self)
+        ask_msg.move(QtGui.QCursor.pos() - ( geo.topRight() * 3 ))
+        ask_msg.exec_()
+        msg = ask_msg.message
+
+        self.upload_progress.setVisible(True)
+
         s = os.path.getsize(self.local_file_path)
         self.upload_progress.setMaximum(s)
 
@@ -523,15 +639,7 @@ class MainWidget(QtWidgets.QFrame):
         
         self.main_layout.addWidget(self.main_menu)
 
-        self.init_button = QtWidgets.QPushButton("Open a root folder")
-        self.init_button.setIconSize(QtCore.QSize(64, 64))
-        self.init_button.setIcon(QtGui.QIcon(ICONS + "inbox.svg"))
-        self.init_button.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
-                                       QtWidgets.QSizePolicy.Expanding)
-        self.init_button.clicked.connect(self.init_root)
-        self.init_button.setFlat(True)
-        self.init_button.setStyleSheet("""QPushButton{background-color: transparent}""")
-        self.init_button.setContentsMargins(10,10,10,10)
+        self.init_button = ProjectSelector(self)
         self.main_layout.addWidget(self.init_button)
 
         self.setLayout(self.main_layout)
@@ -569,12 +677,13 @@ class MainWidget(QtWidgets.QFrame):
         self.cur_panel = panel
         self.pathbar.set_current_level(panel_path)
 
-    def init_root(self):
+    def init_root(self, root=""):
         
-        r = QtWidgets.QFileDialog.getExistingDirectory(self, "Pick a root folder")
-        if not r: return
+        if not root:
+            r = QtWidgets.QFileDialog.getExistingDirectory(self, "Pick a root folder")
+            if not r: return
 
-        root = r.replace('\\', '/')
+            root = r.replace('\\', '/')
         bucket_name = root.split('/')[-1]
         awsv_connection.init_connection()
 
@@ -598,6 +707,28 @@ class MainWidget(QtWidgets.QFrame):
         self.main_layout.addWidget(p)
         self.cur_panel = p
         self.root_panel = p
+
+        # add to history
+        history = tempfile.gettempdir() + os.sep + "aws_vault_projects"
+        if not os.path.exists(history):
+            with open(history, 'w') as f:
+                f.write(root + '\n')
+        else:
+            with open(history, 'r') as f:
+                history = f.readlines()
+
+            if root + '\n' in history:
+                return
+
+            if len(history) > 10:
+                history.pop(0)
+                history.append(root + '\n')
+                with open(history, 'w') as f:
+                    f.writelines(history)
+            else:
+                with open(history, 'a') as f:
+                    f.write(root + '\n')
+
 
     def closeEvent(self, event):
         
