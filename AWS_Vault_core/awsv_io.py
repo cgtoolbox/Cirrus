@@ -4,6 +4,8 @@ import socket
 import datetime
 import json
 import tempfile
+import shutil
+from stat import S_IREAD, S_IRGRP, S_IROTH, S_IWRITE
 
 from PySide2 import QtCore
 
@@ -58,7 +60,7 @@ def get_metadata(object_path=""):
         else:
             raise e
 
-def send_object(object_path="", callback=None):
+def send_object(object_path="", message="", callback=None):
     """ Send an object to ams S3 server, create new file if doesn't exist
         or update exsiting file. Arg callback is a funciton called to update
         transfert information ( in bytes )
@@ -71,9 +73,65 @@ def send_object(object_path="", callback=None):
     root = awsv_connection.CONNECTIONS["root"]
     object_key = object_path.replace(root, '')
 
+    # lock the file before sending it to cloud
+    os.chmod(object_path, S_IREAD|S_IRGRP|S_IROTH)
+
     Bucket.upload_file(object_path, object_key, Callback=callback)
 
-    generate_metadata(object_key)
+    generate_metadata(object_key, message=message)
+
+def get_object_size(object_path=""):
+    """ Get object size from S3 cloud
+    """
+    Bucket = awsv_connection.CURRENT_BUCKET["bucket"]
+
+    assert os.path.exists(object_path), "object_path not valid"
+
+    object_path = object_path.replace('\\', '/')
+    root = awsv_connection.CONNECTIONS["root"]
+    object_key = object_path.replace(root, '')
+
+    obj = Bucket.Object(object_key)
+    try:
+        return obj.content_length
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] == "404":
+            return None
+        else:
+            raise e
+
+def get_object(object_path="", version_id="", callback=None):
+    """ Gets a given object onto the S3 cloud and download it locally
+        Gets also the metadata file
+    """
+    Bucket = awsv_connection.CURRENT_BUCKET["bucket"]
+
+    assert os.path.exists(object_path), "object_path not valid"
+
+    object_path = object_path.replace('\\', '/')
+    root = awsv_connection.CONNECTIONS["root"]
+    object_key = object_path.replace(root, '')
+
+    # file is downloaded first to a temp file then copied to the right file
+    temp_file = object_path + ".tmp"  
+    Bucket.download_file(object_key, temp_file, Callback=callback)
+
+    os.chmod(object_path, S_IWRITE)
+    shutil.copy2(temp_file, object_path)
+
+    if os.path.exists(temp_file):
+        os.remove(temp_file)
+
+    metadata = get_metadata(object_path)
+    if not metadata:
+        generate_metadata(object_key)
+    else:
+        p, f = os.path.split(object_path)
+        p = p.replace('\\', '/')
+        f = f.split('.')[0] + awsv_objects.METADATA_IDENTIFIER
+        metadata_file = p + '/' + f
+        with open(metadata_file, 'w') as f:
+            json.dump(metadata, f, indent=4)
 
 def generate_metadata(object_key=None, message="Metadata creation"):
     """ Create a json metadata file locally and set it on s3 server.
@@ -253,15 +311,19 @@ class ElementFetcher(QtCore.QThread):
 
         self.end.emit([cloud_data, local_data])
 
-class FileSender(QtCore.QThread):
+class FileIOThread(QtCore.QThread):
 
-    start_sgn = QtCore.Signal()
+    start_sgn = QtCore.Signal(int)
     update_progress_sgn = QtCore.Signal(int)
-    end_sgn = QtCore.Signal()
+    end_sgn = QtCore.Signal(int)
 
-    def __init__(self, local_file_path):
-        super(FileSender, self).__init__()
+    def __init__(self, local_file_path, mode=0, message=""):
+        """ mode: 0 => upload, 1 => download
+        """
+        super(FileIOThread, self).__init__()
         self.local_file_path = local_file_path
+        self.mode = mode
+        self.message = message
 
     def update_progress(self, progress):
         
@@ -269,6 +331,10 @@ class FileSender(QtCore.QThread):
     
     def run(self):
         
-        self.start_sgn.emit()
-        send_object(self.local_file_path, self.update_progress)
-        self.end_sgn.emit()
+        self.start_sgn.emit(self.mode)
+        if self.mode == 0:
+            send_object(self.local_file_path, message=self.message,
+                        callback=self.update_progress)
+        else:
+            get_object(self.local_file_path, callback=self.update_progress)
+        self.end_sgn.emit(self.mode)

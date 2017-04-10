@@ -38,7 +38,7 @@ class ObjectMetadata(object):
     def __init__(self, object_key=""):
 
         self.__root = awsv_connection.CURRENT_BUCKET["local_root"] + '/'
-        self.__object_key = object_key.split('.')[0] + "_meta.json"
+        self.__object_key = object_key.split('.')[0] + METADATA_IDENTIFIER
         
         self.checked_out = False
         self.user = ObjectMetadata.get_user_uid()
@@ -85,7 +85,7 @@ class ObjectMetadata(object):
 
     def dump(self):
          
-        if self.__object_key == "_meta.json":
+        if self.__object_key == METADATA_IDENTIFIER:
             return False
 
         with open(self.__root + self.__object_key, 'w') as f:

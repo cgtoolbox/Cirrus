@@ -324,11 +324,11 @@ class PanelFile(PanelFolder):
 
         root = awsv_connection.CURRENT_BUCKET["local_root"] + '/'
         self.local_file_path = root + self.path
-        self.local_file_size = os.path.getsize(self.local_file_path) >> 20
+        self.local_file_size = os.path.getsize(self.local_file_path) * 0.000001
         
         self.setToolTip("Local path: " + self.local_file_path + '\n' + \
                         "Cloud path: " + self.path + '\n' + \
-                        "File Size: " + str(self.local_file_size) + " mb")
+                        "File Size: " + '{0:.2f}'.format(self.local_file_size) + " mb")
         
         self.worker = None
 
@@ -343,11 +343,12 @@ class PanelFile(PanelFolder):
             self.ico.setPixmap(QtGui.QIcon(ICONS + "document.svg").pixmap(28, 28))
         else:
             self.ico.setPixmap(QtGui.QIcon(icon).pixmap(28, 28))
-
-        self.upload_progress = QtWidgets.QProgressBar()
-        self.upload_progress.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.upload_progress.setVisible(False)
-        self.upload_progress.setStyleSheet("""QProgressBar {
+        
+        self.activity_progress = QtWidgets.QProgressBar()
+        self.activity_progress.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
+                                             QtWidgets.QSizePolicy.Minimum)
+        self.activity_progress.setVisible(False)
+        self.activity_progress.setStyleSheet("""QProgressBar {
                                                 border: 0px;
                                                 color: #cbcbcb;
                                  background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
@@ -356,7 +357,23 @@ class PanelFile(PanelFolder):
                                  background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
                                                              stop: 0 #437db9, stop: 1.0 #4b89ca);
                                                 width: 20px;}""")
-        self.main_layout.addWidget(self.upload_progress)
+        self.main_layout.addWidget(self.activity_progress)
+
+        self.activity_upload_ico = QtWidgets.QLabel()
+        self.activity_upload_ico.setFixedHeight(29)
+        self.activity_upload_ico.setFixedWidth(29)
+        self.upload_movie = QtGui.QMovie(ICONS + "upload.gif", parent=self)
+        self.activity_upload_ico.setMovie(self.upload_movie)
+        self.activity_upload_ico.setVisible(False)
+        self.main_layout.addWidget(self.activity_upload_ico)
+
+        self.activity_download_ico = QtWidgets.QLabel()
+        self.activity_download_ico.setFixedHeight(29)
+        self.activity_download_ico.setFixedWidth(29)
+        self.download_movie = QtGui.QMovie(ICONS + "download.gif", parent=self)
+        self.activity_download_ico.setMovie(self.download_movie)
+        self.activity_download_ico.setVisible(False)
+        self.main_layout.addWidget(self.activity_download_ico)
 
         self.buttons_layout = QtWidgets.QHBoxLayout()
         self.buttons_layout.addStretch(1)
@@ -379,6 +396,7 @@ class PanelFile(PanelFolder):
             self.is_on_cloud_button.setIcon(QtGui.QIcon(ICONS + "cloud_close.png"))
         else:
             self.is_on_cloud_button.setIcon(QtGui.QIcon(ICONS + "cloud_checkmark.png"))
+            self.is_on_cloud_button.clicked.connect(self.get_from_cloud)
         self.is_on_cloud_button.setIconSize(QtCore.QSize(26, 26))
         self.is_on_cloud_button.setFixedSize(QtCore.QSize(28, 28))
         self.buttons_layout.addWidget(self.is_on_cloud_button)
@@ -416,23 +434,41 @@ class PanelFile(PanelFolder):
 
     def update_progress(self, progress):
         
-        next_val = self.upload_progress.value() + progress
-        self.upload_progress.setValue(next_val)
+        next_val = self.activity_progress.value() + progress
+        self.activity_progress.setValue(next_val)
 
-    def start_progress(self):
+    def start_progress(self, mode):
 
-        self.upload_progress.setValue(0)
-        self.upload_progress.setVisible(True)
+        if mode == 0:
+            s = os.path.getsize(self.local_file_path)
+            self.activity_progress.setMaximum(s)
+            self.activity_upload_ico.setVisible(True)
+            self.upload_movie.start()
+        else:
+            s = awsv_io.get_object_size(self.local_file_path)
+            self.activity_progress.setMaximum(s)
+            self.activity_download_ico.setVisible(True)
+            self.download_movie.start()
+
+        self.activity_progress.setValue(0)
+        self.activity_progress.setVisible(True)
         self.save_to_cloud_button.setEnabled(False)
         self.lock_button.setEnabled(False)
         self.infos_button.setEnabled(False)
         self.is_on_cloud_button.setEnabled(False)
         self.refresh_button.setEnabled(False)
 
-    def end_progress(self):
+    def end_progress(self, mode):
 
-        self.upload_progress.setValue(0)
-        self.upload_progress.setVisible(False)
+        if mode == 0:
+            self.upload_movie.stop()
+            self.activity_upload_ico.setVisible(False)
+        else:
+            self.activity_download_ico.setVisible(False)
+            self.download_movie.stop()
+
+        self.activity_progress.setValue(0)
+        self.activity_progress.setVisible(False)
         self.save_to_cloud_button.setEnabled(True)
         self.lock_button.setEnabled(True)
         self.infos_button.setEnabled(True)
@@ -441,12 +477,44 @@ class PanelFile(PanelFolder):
 
         self.is_on_cloud_button.setIcon(QtGui.QIcon(ICONS + "cloud_checkmark.png"))
 
+    def get_from_cloud(self):
+
+        if not os.path.exists(self.local_file_path):
+            QtWidgets.QMessageBox.critical(self, "Error", "File not found: " + file_path)
+            return
+
+        confirm_msg = ("Get file " + self.local_file_path + " from cloud ?\n"
+                       "Warning: This will erase your local modification")
+        ask = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Confirm", confirm_msg,
+                                    buttons = QtWidgets.QMessageBox.StandardButton.Yes|\
+                                              QtWidgets.QMessageBox.StandardButton.No,
+                                    parent=self)
+        geo = ask.frameGeometry()
+        
+        ask.move(QtGui.QCursor.pos() - ( geo.topRight() * 3 ))
+        ask.setStyleSheet("""QMessageBox{background-color: #3e5975}
+                             QFrame{background-color: #3e5975}
+                             QLabel{background-color: #3e5975}""")
+        
+        if ask.exec_() == QtWidgets.QMessageBox.StandardButton.No: return
+
+        self.activity_progress.setVisible(True)
+
+        self.worker = awsv_io.FileIOThread(self.local_file_path, mode=1)
+       
+        self.worker.start_sgn.connect(self.start_progress)
+        self.worker.end_sgn.connect(self.end_progress)
+        self.worker.update_progress_sgn.connect(self.update_progress)
+
+        self.worker.start()
+
     def save_to_cloud(self):
 
         if not os.path.exists(self.local_file_path):
             QtWidgets.QMessageBox.critical(self, "Error", "File not found: " + file_path)
-
-        confirm_msg = "Send file: {} on the cloud ?\nSize: {} Mb".format(self.local_file_path,
+            return
+        
+        confirm_msg = "Send file: {0} on the cloud ?\nSize: {1:.2f} Mb".format(self.local_file_path,
                                                                          self.local_file_size)
         ask = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Question, "Confirm", confirm_msg,
                                     buttons = QtWidgets.QMessageBox.StandardButton.Yes|\
@@ -466,12 +534,12 @@ class PanelFile(PanelFolder):
         ask_msg.exec_()
         msg = ask_msg.message
 
-        self.upload_progress.setVisible(True)
+        self.activity_progress.setVisible(True)
 
         s = os.path.getsize(self.local_file_path)
-        self.upload_progress.setMaximum(s)
+        self.activity_progress.setMaximum(s)
 
-        self.worker = awsv_io.FileSender(self.local_file_path)
+        self.worker = awsv_io.FileIOThread(self.local_file_path, message=msg)
        
         self.worker.start_sgn.connect(self.start_progress)
         self.worker.end_sgn.connect(self.end_progress)
