@@ -5,6 +5,8 @@ import datetime
 import json
 import tempfile
 import shutil
+import datetime
+import time
 from stat import S_IREAD, S_IRGRP, S_IROTH, S_IWRITE
 
 from PySide2 import QtCore
@@ -38,19 +40,19 @@ def get_metadata(object_path=""):
 
     assert os.path.exists(object_path), "object_path not valid"
     assert Bucket is not None, "Bucket is None"
-
-    tmp = tempfile.gettempdir().replace('\\', '/') + '/'
-
+    
     object_path = object_path.replace('\\', '/')
     root = awsv_connection.CONNECTIONS["root"]
     object_key = object_path.replace(root, '')
-    metadata_file = object_key.split('.')[0] + "_meta.json"
+    metadata_file = object_key.split('.')[0] + awsv_objects.METADATA_IDENTIFIER
+
+    metadata_path = os.path.dirname(object_path) + '/' + metadata_file
 
     try:
         obj = Bucket.Object(metadata_file)
-        obj.download_file(tmp + metadata_file)
+        obj.download_file(metadata_path + metadata_file)
 
-        with open(tmp + metadata_file) as f:
+        with open(metadata_path) as f:
             data = json.load(f)
         return data
         
@@ -76,7 +78,16 @@ def send_object(object_path="", message="", callback=None):
     # lock the file before sending it to cloud
     os.chmod(object_path, S_IREAD|S_IRGRP|S_IROTH)
 
-    Bucket.upload_file(object_path, object_key, Callback=callback)
+    user_uid = awsv_objects.ObjectMetadata.get_user_uid()
+    now = datetime.datetime.now()
+
+    metadata = {"message":message,
+                "time":now.ctime(),
+                "user":user_uid}
+
+    Bucket.upload_file(object_path, object_key,
+                       ExtraArgs={"Metadata":metadata},
+                       Callback=callback)
 
     generate_metadata(object_key, message=message)
 
@@ -133,14 +144,15 @@ def get_object(object_path="", version_id="", callback=None):
         with open(metadata_file, 'w') as f:
             json.dump(metadata, f, indent=4)
 
-def generate_metadata(object_key=None, message="Metadata creation"):
+def generate_metadata(object_key=None, checked_out=False,
+                      message="Metadata creation"):
     """ Create a json metadata file locally and set it on s3 server.
     """
     Bucket = awsv_connection.CURRENT_BUCKET["bucket"]
     assert Bucket is not None, "Bucket is None"
 
     m = awsv_objects.ObjectMetadata(object_key=object_key)
-    m.checked_out = False
+    m.checked_out = checked_out
     m.message = message
     metadata_file = m.dump()
 
@@ -283,6 +295,23 @@ def get_bucket_folder_elements(folder_name=""):
 
     return result
 
+def check_object(object_path=""):
+
+    client = awsv_connection.CONNECTIONS["s3_client"]
+    bucket_name = awsv_connection.CURRENT_BUCKET["name"]
+
+    object_path = object_path.replace('\\', '/')
+    root = awsv_connection.CONNECTIONS["root"]
+    object_key = object_path.replace(root, '')
+
+    try:
+        client.head_object(Bucket=bucket_name, Key=object_key)
+        return True
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] == "404":
+            return False
+        raise e
+
 class ElementFetcher(QtCore.QThread):
 
     end = QtCore.Signal(list)
@@ -338,3 +367,29 @@ class FileIOThread(QtCore.QThread):
         else:
             get_object(self.local_file_path, callback=self.update_progress)
         self.end_sgn.emit(self.mode)
+
+class FetchStateThread(QtCore.QThread):
+    """ Used in PanelFileButtons when refresh state is needed
+    """
+    start_sgn = QtCore.Signal()
+    end_sgn = QtCore.Signal(int)
+
+    def __init__(self, local_file_path):
+        super(FetchStateThread, self).__init__()
+        self.local_file_path = local_file_path
+
+    def run(self):
+
+        self.start_sgn.emit()
+        is_on_cloud = check_object(self.local_file_path)
+        if is_on_cloud:
+
+            if not os.path.exists(self.local_file_path):
+                self.end_sgn.emit(awsv_objects.FileState.CLOUD_ONLY)
+                return
+
+            metadata = get_metadata(self.local_file_path)
+            self.end_sgn.emit(awsv_objects.FileState.CLOUD_AND_LOCAL_LATEST)
+
+        else:
+            self.end_sgn.emit(awsv_objects.FileState.LOCAL_ONLY)

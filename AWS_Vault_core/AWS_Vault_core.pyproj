@@ -22,6 +22,9 @@
     <PtvsTargetsFile>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets</PtvsTargetsFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="awsv_config.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="awsv_connection.py">
       <SubType>Code</SubType>
     </Compile>
@@ -32,6 +35,15 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="awsv_widgets.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="awsv_widgets_inputs.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="awsv_widgets_panels.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="awsv_widgets_pathbar.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Test.py">

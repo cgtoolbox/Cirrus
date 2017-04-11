@@ -11,14 +11,15 @@ from PySide2 import QtCore
 
 from AWS_Vault_core import awsv_connection
 
-METADATA_IDENTIFIER = "_meta.json"
+METADATA_IDENTIFIER = ".awsvmd"
 
 class FileState():
 
     NONE = -1
     LOCAL_ONLY = 0
     CLOUD_ONLY = 1
-    CLOUD_AND_LOCAL = 2
+    CLOUD_AND_LOCAL_LATEST = 2
+    CLOUD_AND_LOCAL_NOT_LATEST = 3
 
 class ObjectState(object):
 
