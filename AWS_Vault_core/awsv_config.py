@@ -15,8 +15,8 @@ class Config():
         _config = ConfigParser.ConfigParser()
         _config.optionxform = str
 
-        if os.path.exists(cfgfile_path) and not force:
-            _config.read(cfgfile_path)
+        if os.path.exists(self.cfgfile_path) and not force:
+            _config.read(self.cfgfile_path)
             return _config
 
         _config.add_section("Main")

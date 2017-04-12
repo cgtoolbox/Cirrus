@@ -105,10 +105,12 @@ class MainWidget(QtWidgets.QFrame):
         self.main_menu = QtWidgets.QMenuBar(self)
         self.main_menu.setFixedHeight(25)
         self.file_menu = self.main_menu.addMenu("File")
-        self.open_root_act = QtWidgets.QAction("Create new project", self)
-        self.close_root_act = QtWidgets.QAction("Download a project", self)
-        self.file_menu.addAction(self.open_root_act)
-        self.file_menu.addAction(self.close_root_act)
+        self.create_proj_act = QtWidgets.QAction("Create new project", self)
+        self.create_proj_act.setIcon(QtGui.QIcon(ICONS + "add.svg"))
+        self.download_proj_act = QtWidgets.QAction("Download a project", self)
+        self.download_proj_act.setIcon(QtGui.QIcon(ICONS + "inbox.svg"))
+        self.file_menu.addAction(self.create_proj_act)
+        self.file_menu.addAction(self.download_proj_act)
         self.options_menu = self.main_menu.addMenu("Options")
         self.auto_check_state_act = QtWidgets.QAction("Auto Check Files State", self)
         self.auto_check_state_act.setCheckable(True)
@@ -205,7 +207,6 @@ class MainWidget(QtWidgets.QFrame):
             else:
                 with open(history, 'a') as f:
                     f.write(root + '\n')
-
 
     def closeEvent(self, event):
         

@@ -37,8 +37,7 @@ def get_metadata(object_path=""):
         if not found.
     """
     Bucket = awsv_connection.CURRENT_BUCKET["bucket"]
-
-    assert os.path.exists(object_path), "object_path not valid"
+    
     assert Bucket is not None, "Bucket is None"
     
     object_path = object_path.replace('\\', '/')
@@ -50,7 +49,7 @@ def get_metadata(object_path=""):
 
     try:
         obj = Bucket.Object(metadata_file)
-        obj.download_file(metadata_path + metadata_file)
+        obj.download_file(metadata_path)
 
         with open(metadata_path) as f:
             data = json.load(f)
@@ -96,8 +95,6 @@ def get_object_size(object_path=""):
     """
     Bucket = awsv_connection.CURRENT_BUCKET["bucket"]
 
-    assert os.path.exists(object_path), "object_path not valid"
-
     object_path = object_path.replace('\\', '/')
     root = awsv_connection.CONNECTIONS["root"]
     object_key = object_path.replace(root, '')
@@ -107,7 +104,7 @@ def get_object_size(object_path=""):
         return obj.content_length
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == "404":
-            return None
+            return 0
         else:
             raise e
 
@@ -117,8 +114,6 @@ def get_object(object_path="", version_id="", callback=None):
     """
     Bucket = awsv_connection.CURRENT_BUCKET["bucket"]
 
-    assert os.path.exists(object_path), "object_path not valid"
-
     object_path = object_path.replace('\\', '/')
     root = awsv_connection.CONNECTIONS["root"]
     object_key = object_path.replace(root, '')
@@ -127,8 +122,11 @@ def get_object(object_path="", version_id="", callback=None):
     temp_file = object_path + ".tmp"  
     Bucket.download_file(object_key, temp_file, Callback=callback)
 
-    os.chmod(object_path, S_IWRITE)
-    shutil.copy2(temp_file, object_path)
+    if os.path.exists(object_path):
+        os.chmod(object_path, S_IWRITE)
+        shutil.copy2(temp_file, object_path)
+    else:
+        os.rename(temp_file, object_path)
 
     if os.path.exists(temp_file):
         os.remove(temp_file)
