@@ -2,52 +2,58 @@ import ConfigParser
 import os
 import sys
 
-class Config():
+"""
+    Configuration options singleton.
+"""
 
+def generate_config_file():
+        
     cfgfile_path = os.path.dirname(__file__) + os.sep + "config.ini"
-
-    def __init__(self, force=False):
-
-        self.config = self.generate_config_file(force)
+    config = ConfigParser.ConfigParser()
+    config.optionxform = str
     
-    def generate_config_file(self, force=False):
+    if os.path.exists(cfgfile_path):
+        config.read(cfgfile_path)
+        return config
 
-        _config = ConfigParser.ConfigParser()
-        _config.optionxform = str
+    config.add_section("Main")
+    config.set('Main', 'AutoCheckFilesState', True)
+    config.set('Main', 'DefaultCommitMessage', "First Commit")
 
-        if os.path.exists(self.cfgfile_path) and not force:
-            _config.read(self.cfgfile_path)
-            return _config
+    config.add_section("BucketSettings")
+    config.set("BucketSettings", "DefaultRegionName", "eu-central-1")
+    
+    config.add_section("DisplayOptions")
+    config.set('DisplayOptions', 'ShowLockedFiles', True)
+    config.set('DisplayOptions', 'ShowLocalFiles', True)
+    config.set('DisplayOptions', 'ShowCloudFiles', True)
+    config.set('DisplayOptions', 'ShowUpToDateFiles', True)
 
-        _config.add_section("Main")
-        _config.set('Main', 'AutoCheckFilesState', True)
-        _config.set('Main', 'DefaultCommitMessage', "First Commit")
+    with open(cfgfile_path, 'w') as cfgfile:
+        config.write(cfgfile)
 
-        _config.add_section("DisplayOptions")
-        _config.set('DisplayOptions', 'ShowLockedFiles', True)
-        _config.set('DisplayOptions', 'ShowLocalFiles', True)
-        _config.set('DisplayOptions', 'ShowCloudFiles', True)
-        _config.set('DisplayOptions', 'ShowUpToDateFiles', True)
+    return config
 
-        with open(self.cfgfile_path, 'w') as cfgfile:
-            _config.write(cfgfile)
+class Config():
+    
+    config = generate_config_file()
 
-        return _config
-
-    def get(self, section, option, _type):
+    @classmethod
+    def get(cls, section, option, _type):
 
         if _type == bool:
-            return self.config.getboolean(section, option)
+            return cls.config.getboolean(section, option)
         elif _type == float:
-            return self.config.getfloat(section, option)
+            return cls.config.getfloat(section, option)
         elif _type == int:
-            return self.config.getint(section, option)
+            return cls.config.getint(section, option)
         else:
-            return self.config.get(section, option)
-
-    def set(self, section, option, value):
+            return cls.config.get(section, option)
+    
+    @classmethod
+    def set(cls, section, option, value):
         
-        self.config.set(section, option, value)
+        cls.config.set(section, option, value)
 
-        with open(self.cfgfile_path, 'w') as cfgfile:
-            self.config.write(cfgfile)
+        with open(cls.cfgfile_path, 'w') as cfgfile:
+            cls.config.write(cfgfile)

@@ -12,14 +12,13 @@ from AWS_Vault_core import awsv_io
 reload(awsv_io)
 from AWS_Vault_core import awsv_objects
 reload(awsv_objects)
-from AWS_Vault_core import awsv_config
-reload(awsv_config)
 from AWS_Vault_core import awsv_widgets_pathbar as pathbar
 reload(pathbar)
 from AWS_Vault_core import awsv_widgets_inputs
 reload(awsv_widgets_inputs)
 
-from AWS_Vault_core import awsv_connection
+from AWS_Vault_core.awsv_config import Config
+from AWS_Vault_core.awsv_connection import ConnectionInfos
 
 ICONS = os.path.dirname(__file__) + "\\icons\\"
 
@@ -91,7 +90,7 @@ class PanelFolder(QtWidgets.QFrame):
     def mouseDoubleClickEvent(self, event):
 
         main_ui = self.panel.main_ui
-        bucket = awsv_connection.CURRENT_BUCKET["bucket"]
+        bucket = ConnectionInfos.get("bucket")
         data = awsv_io.get_bucket_folder_elements(folder_name=self.path)
         main_ui.show_panel(panel_name=self.name, panel_path=self.path, data=data)
 
@@ -218,7 +217,7 @@ class PanelFile(PanelFolder):
     def __init__(self, name="", path="", state=awsv_objects.FileState.NONE, parent=None):
 
         self.state = state
-        root = awsv_connection.CURRENT_BUCKET["local_root"] + '/'
+        root = ConnectionInfos.get("local_root")
         self.local_file_path = root + path
         if os.path.exists(self.local_file_path):
             self.local_file_size = os.path.getsize(self.local_file_path) * 0.000001
@@ -485,7 +484,7 @@ class Panel(QtWidgets.QFrame):
             time.sleep(1)
 
         self.fetcher = awsv_io.ElementFetcher()
-        self.fetcher.bucket = awsv_connection.CURRENT_BUCKET["bucket"]
+        self.fetcher.bucket = ConnectionInfos.get("bucket")
         self.fetcher.folder_name = self.subfolder
         self.fetcher.end.connect(self.element_fetched)
         self.fetcher.start()

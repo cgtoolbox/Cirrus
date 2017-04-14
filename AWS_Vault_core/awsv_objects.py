@@ -9,7 +9,8 @@ import os
 
 from PySide2 import QtCore
 
-from AWS_Vault_core import awsv_connection
+from AWS_Vault_core.awsv_connection import ConnectionInfos
+from awsv_config import Config
 
 METADATA_IDENTIFIER = ".awsvmd"
 
@@ -38,7 +39,7 @@ class ObjectMetadata(object):
 
     def __init__(self, object_key=""):
 
-        self.__root = awsv_connection.CURRENT_BUCKET["local_root"] + '/'
+        self.__root = ConnectionInfos.get("local_root")
         self.__object_key = object_key.split('.')[0] + METADATA_IDENTIFIER
         
         self.checked_out = False

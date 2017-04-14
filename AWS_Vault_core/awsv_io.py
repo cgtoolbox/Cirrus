@@ -13,6 +13,7 @@ from PySide2 import QtCore
 
 from AWS_Vault_core import awsv_connection
 reload(awsv_connection)
+from AWS_Vault_core.awsv_connection import ConnectionInfos
 from AWS_Vault_core import awsv_objects
 reload(awsv_objects)
 
@@ -21,8 +22,8 @@ import botocore
 
 def get_bucket(bucket_name=""):
 
-    client = awsv_connection.CONNECTIONS["s3_client"]
-    resource = awsv_connection.CONNECTIONS["s3_resource"]
+    client = ConnectionInfos.get("s3_client")
+    resource = ConnectionInfos.get("s3_resource")
 
     try:
         client.head_bucket(Bucket=bucket_name)
@@ -36,13 +37,13 @@ def get_metadata(object_path=""):
     """ Get the given object_path metadata on S3 vault, return None
         if not found.
     """
-    Bucket = awsv_connection.CURRENT_BUCKET["bucket"]
+    Bucket = ConnectionInfos.get("bucket")
     
     assert Bucket is not None, "Bucket is None"
     
     object_path = object_path.replace('\\', '/')
-    root = awsv_connection.CONNECTIONS["root"]
-    object_key = object_path.replace(root, '')
+    local_root = ConnectionInfos.get("local_root")
+    object_key = object_path.replace(local_root, '')
     metadata_file = object_key.split('.')[0] + awsv_objects.METADATA_IDENTIFIER
 
     metadata_path = os.path.dirname(object_path) + '/' + metadata_file
@@ -66,13 +67,13 @@ def send_object(object_path="", message="", callback=None):
         or update exsiting file. Arg callback is a funciton called to update
         transfert information ( in bytes )
     """
-    Bucket = awsv_connection.CURRENT_BUCKET["bucket"]
+    Bucket = ConnectionInfos.get("bucket")
 
     assert os.path.exists(object_path), "object_path not valid"
     
     object_path = object_path.replace('\\', '/')
-    root = awsv_connection.CONNECTIONS["root"]
-    object_key = object_path.replace(root, '')
+    local_root = ConnectionInfos.get("local_root")
+    object_key = object_path.replace(local_root, '')
 
     # lock the file before sending it to cloud
     os.chmod(object_path, S_IREAD|S_IRGRP|S_IROTH)
@@ -93,11 +94,11 @@ def send_object(object_path="", message="", callback=None):
 def get_object_size(object_path=""):
     """ Get object size from S3 cloud
     """
-    Bucket = awsv_connection.CURRENT_BUCKET["bucket"]
+    Bucket = ConnectionInfos.get("bucket")
 
     object_path = object_path.replace('\\', '/')
-    root = awsv_connection.CONNECTIONS["root"]
-    object_key = object_path.replace(root, '')
+    local_root = ConnectionInfos.get("local_root")
+    object_key = object_path.replace(local_root, '')
 
     obj = Bucket.Object(object_key)
     try:
@@ -112,11 +113,11 @@ def get_object(object_path="", version_id="", callback=None):
     """ Gets a given object onto the S3 cloud and download it locally
         Gets also the metadata file
     """
-    Bucket = awsv_connection.CURRENT_BUCKET["bucket"]
+    Bucket = ConnectionInfos.get("bucket")
 
     object_path = object_path.replace('\\', '/')
-    root = awsv_connection.CONNECTIONS["root"]
-    object_key = object_path.replace(root, '')
+    local_root = ConnectionInfos.get("local_root")
+    object_key = object_path.replace(local_root, '')
 
     # file is downloaded first to a temp file then copied to the right file
     temp_file = object_path + ".tmp"  
@@ -146,7 +147,7 @@ def generate_metadata(object_key=None, checked_out=False,
                       message="Metadata creation"):
     """ Create a json metadata file locally and set it on s3 server.
     """
-    Bucket = awsv_connection.CURRENT_BUCKET["bucket"]
+    Bucket = ConnectionInfos.get("bucket")
     assert Bucket is not None, "Bucket is None"
 
     m = awsv_objects.ObjectMetadata(object_key=object_key)
@@ -160,7 +161,7 @@ def checkout_file(toggle, object_path="", message=""):
     """ Checkout the given object on aws s3 server, that means it sets
         the metadata "checked_out" to True with a given ( optional ) message.
     """
-    Bucket = awsv_connection.CURRENT_BUCKET["bucket"]
+    Bucket = ConnectionInfos.get("bucket")
     assert os.path.exists(object_path), "Object is None"
     assert Bucket is not None, "Bucket is None"
     
@@ -192,8 +193,8 @@ def checkout_file(toggle, object_path="", message=""):
             return result
 
     object_path = object_path.replace('\\', '/')
-    root = awsv_connection.CONNECTIONS["root"]
-    object_key = object_path.replace(root, '')
+    local_root = ConnectionInfos.get("local_root")
+    object_key = object_path.replace(local_root, '')
 
     m = awsv_objects.ObjectMetadata(object_key=object_key)
     m.checked_out = toggle
@@ -213,7 +214,7 @@ def get_local_folder_element(folder):
         return None
 
     elements = os.listdir(folder)
-    local_root = awsv_connection.CURRENT_BUCKET["local_root"].replace('\\', '/')
+    local_root = ConnectionInfos.get("local_root")
     clean_root = folder.replace('\\', '/').replace(local_root, '')
     if clean_root == '/': clean_root = ''
     if clean_root.startswith('/'): clean_root = clean_root[1:]
@@ -254,11 +255,11 @@ def get_bucket_folder_elements(folder_name=""):
         Bucket + Folder name.
         Returns a awsv_objects.BucketFolderElements object.
     """
-    Bucket = awsv_connection.CURRENT_BUCKET["bucket"]
+    Bucket = ConnectionInfos.get("bucket")
 
     if folder_name != "":
         if not folder_name.endswith('/'): folder_name += '/'
-    s3_client = awsv_connection.CONNECTIONS["s3_client"]
+    s3_client = ConnectionInfos.get("s3_client")
 
     result = awsv_objects.BucketFolderElements()
     result.root = folder_name
@@ -295,12 +296,12 @@ def get_bucket_folder_elements(folder_name=""):
 
 def check_object(object_path=""):
 
-    client = awsv_connection.CONNECTIONS["s3_client"]
-    bucket_name = awsv_connection.CURRENT_BUCKET["name"]
+    client = ConnectionInfos.get("s3_client")
+    bucket_name = ConnectionInfos.get("bucket_name")
 
     object_path = object_path.replace('\\', '/')
-    root = awsv_connection.CONNECTIONS["root"]
-    object_key = object_path.replace(root, '')
+    local_root = ConnectionInfos.get("local_root")
+    object_key = object_path.replace(local_root, '')
 
     try:
         client.head_object(Bucket=bucket_name, Key=object_key)
@@ -330,8 +331,8 @@ class ElementFetcher(QtCore.QThread):
 
         if self.cancel: return
         
-        root = awsv_connection.CURRENT_BUCKET["local_root"].replace('\\', '/')
-        folder = root + '/' + self.folder_name
+        local_root = ConnectionInfos.get("local_root")
+        folder = local_root + self.folder_name
 
         local_data = get_local_folder_element(folder)
         if self.cancel: return
@@ -391,3 +392,63 @@ class FetchStateThread(QtCore.QThread):
 
         else:
             self.end_sgn.emit(awsv_objects.FileState.LOCAL_ONLY)
+
+class DownloadProjectThread(QtCore.QThread):
+
+    start_sgn = QtCore.Signal()
+    start_element_download_sgn = QtCore.Signal(str, int)  # element name, element size ( bytes )
+    update_download_progress_sgn = QtCore.Signal(int)  # bytes downloaded
+    end_sgn = QtCore.Signal(int, int, str)  # statue, number of item downloaded, time spent
+
+    def __init__(self, bucket, local_path):
+        super(DownloadProjectThread, self).__init__()
+
+        self.bucket = bucket
+        self.local_path = local_path + '/'
+
+    def update_progress(self, b):
+
+        self.update_download_progress_sgn.emit(b)
+
+    def run(self):
+
+        start_time = datetime.datetime.now()
+
+        self.start_sgn.emit()
+        try:
+            all_objects = self.bucket.objects.all()
+        except Exception as e:
+            self.end_sgn.emit(-1, 0, str(e))
+            return
+
+        n_elements = 0
+
+        for obj in all_objects:
+            
+            key = obj.key
+
+            # create folder
+            if key.endswith('/'):
+                key = key[0:-1]
+                os.makedirs(self.local_path + key)
+                continue
+            
+            # download object
+            path = self.local_path + key
+            _object = obj.Object()
+            
+            self.start_element_download_sgn.emit(key, obj.size)
+
+            try:
+                _object.download_file(path, Callback=self.update_progress)
+            except Exception as e:
+                self.end_sgn.emit(-1, 0, str(e))
+                return
+
+            n_elements += 1
+
+        end_time = datetime.datetime.now()
+
+        time_elapsed = str(end_time - start_time)
+
+        self.end_sgn.emit(1, 0, time_elapsed)

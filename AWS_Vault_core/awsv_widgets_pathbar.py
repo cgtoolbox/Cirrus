@@ -68,7 +68,7 @@ class PathBarButton(QtWidgets.QPushButton):
 
         main_ui = self.pathbar.main_ui
         if not self.isroot:
-            bucket_name = awsv_connection.CURRENT_BUCKET["name"]
+            bucket_name = ConnectionInfos.get("bucket_name")
             r = self.path.replace(bucket_name + '/', '')
             main_ui.show_panel(panel_name=self.label, panel_path=r, data=None)
         else:
