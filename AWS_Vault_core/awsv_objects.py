@@ -6,6 +6,8 @@ import uuid
 import socket
 import time
 import os
+import logging
+log = logging.getLogger("root")
 
 from PySide2 import QtCore
 

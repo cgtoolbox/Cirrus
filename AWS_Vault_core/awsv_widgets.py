@@ -3,6 +3,9 @@ import sys
 import datetime
 import time
 import tempfile
+import logging
+
+log = logging.getLogger("root")
 
 from PySide2 import QtGui
 from PySide2 import QtWidgets
@@ -19,7 +22,8 @@ reload(pathbar)
 from AWS_Vault_core import awsv_widgets_panels as panels
 reload(panels)
 
-from AWS_Vault_core import awsv_connection
+from AWS_Vault_core.awsv_connection import ConnectionInfos
+from AWS_Vault_core.awsv_connection import init_connection
 
 ICONS = os.path.dirname(__file__) + "\\icons\\"
 
@@ -93,7 +97,7 @@ class ProjectGetter(QtWidgets.QMainWindow):
         self.setWindowTitle("Get Project From Cloud")
         self.setWindowIcon(QtGui.QIcon(ICONS + "inbox.svg"))
 
-        awsv_connection.init_connection()
+        init_connection()
         self.client = ConnectionInfos.get("s3_client")
         self.resource = ConnectionInfos.get("s3_resource")
 
@@ -293,6 +297,8 @@ class MainWidget(QtWidgets.QFrame):
 
     def init_root(self, root=""):
         
+        log.info("Init root: " + root)
+
         if not root:
             root = QtWidgets.QFileDialog.getExistingDirectory(self, "Pick a root folder")
             if not root: return
@@ -301,9 +307,9 @@ class MainWidget(QtWidgets.QFrame):
         bucket_name = root.split('/')[-1]
 
         # init the connection informations singleton
-        awsv_connection.init_connection(bucket_name=bucket_name, local_root=root, reset=True)
+        init_connection(bucket_name=bucket_name, local_root=root, reset=True)
 
-        bucket = awsv_connection.ConnectionInfos.get("bucket")
+        bucket = ConnectionInfos.get("bucket")
         if not bucket:
             QtWidgets.QMessageBox.critical(self, "Error", "Can't open root: {}.\nDoes the folder exist on the cloud ?".format(root))
             return False

@@ -3,6 +3,8 @@ import sys
 import datetime
 import time
 import tempfile
+import logging
+log = logging.getLogger("root")
 
 from PySide2 import QtGui
 from PySide2 import QtWidgets
@@ -15,7 +17,7 @@ reload(awsv_objects)
 from AWS_Vault_core import awsv_config
 reload(awsv_config)
 
-from AWS_Vault_core import awsv_connection
+from AWS_Vault_core.awsv_connection import ConnectionInfos
 
 ICONS = os.path.dirname(__file__) + "\\icons\\"
 
@@ -70,7 +72,7 @@ class PathBarButton(QtWidgets.QPushButton):
         if not self.isroot:
             bucket_name = ConnectionInfos.get("bucket_name")
             r = self.path.replace(bucket_name + '/', '')
-            main_ui.show_panel(panel_name=self.label, panel_path=r, data=None)
+            main_ui.show_panel(panel_name=self.label, panel_path=r)
         else:
              self.pathbar.reset()
              main_ui.back_to_root()

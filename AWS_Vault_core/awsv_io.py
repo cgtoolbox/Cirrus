@@ -8,14 +8,15 @@ import shutil
 import datetime
 import time
 from stat import S_IREAD, S_IRGRP, S_IROTH, S_IWRITE
+import logging
+log = logging.getLogger("root")
 
 from PySide2 import QtCore
 
-from AWS_Vault_core import awsv_connection
-reload(awsv_connection)
-from AWS_Vault_core.awsv_connection import ConnectionInfos
 from AWS_Vault_core import awsv_objects
 reload(awsv_objects)
+
+from AWS_Vault_core.awsv_connection import ConnectionInfos
 
 import boto3
 import botocore
@@ -119,6 +120,8 @@ def get_object(object_path="", version_id="", callback=None):
     local_root = ConnectionInfos.get("local_root")
     object_key = object_path.replace(local_root, '')
 
+    log.info("Downloading file: " + object_path + " version_id: " + version_id)
+
     # file is downloaded first to a temp file then copied to the right file
     temp_file = object_path + ".tmp"  
     Bucket.download_file(object_key, temp_file, Callback=callback)
@@ -211,7 +214,10 @@ def checkout_file(toggle, object_path="", message=""):
 def get_local_folder_element(folder):
 
     if not os.path.exists(folder):
+        log.error("Folder {} doesn't exists".format(folder))
         return None
+
+    log.info("Get local folder elements " + folder)
 
     elements = os.listdir(folder)
     local_root = ConnectionInfos.get("local_root")
@@ -256,6 +262,8 @@ def get_bucket_folder_elements(folder_name=""):
         Returns a awsv_objects.BucketFolderElements object.
     """
     Bucket = ConnectionInfos.get("bucket")
+
+    log.info("Get cloud folder element " + folder_name)
 
     if folder_name != "":
         if not folder_name.endswith('/'): folder_name += '/'

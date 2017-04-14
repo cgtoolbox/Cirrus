@@ -5,8 +5,8 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{b4c6d7d7-e4ee-40c9-bda8-92dec16e4974}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>Test.py</StartupFile>
-    <SearchPath>..\</SearchPath>
+    <StartupFile>main.py</StartupFile>
+    <SearchPath>..\..\</SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <ProjectTypeGuids>{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
@@ -44,6 +44,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="awsv_widgets_pathbar.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="main.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Test.py">

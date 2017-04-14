@@ -1,6 +1,8 @@
 import os
 import boto3
 import datetime
+import logging
+log = logging.getLogger("root")
 
 from AWS_Vault_core import awsv_config
 
@@ -33,18 +35,10 @@ class ConnectionInfos(_singleton):
     def set(cls, key, value):
         cls._states[key] = value
 
-    
-CONNECTIONS = {"s3_client" : None,
-               "s3_resource" : None,
-               "root": None}
-
-CURRENT_BUCKET = {"name" : None,
-                  "bucket": None,
-                  "local_root" : None,
-                  "connection_time" : None}
-
 def init_connection(bucket_name="", local_root="", reset=False):
     
+    log.info("Init connection, bucket_name={}, local_root={}".format(bucket_name, local_root))
+
     assert os.path.exists(local_root), "local root not valid: " + local_root
     local_root = local_root.replace('\\', '/')
 
@@ -59,7 +53,7 @@ def init_connection(bucket_name="", local_root="", reset=False):
         bucket = s3_resource.Bucket(bucket_name)
 
     except botocore.exceptions.ClientError as e:
-        print str(e)
+        log.error(str(e))
         bucket = None
 
     if reset:

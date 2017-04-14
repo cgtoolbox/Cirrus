@@ -3,6 +3,8 @@ import sys
 import datetime
 import time
 import tempfile
+import logging
+log = logging.getLogger("root")
 
 from PySide2 import QtGui
 from PySide2 import QtWidgets
@@ -91,8 +93,7 @@ class PanelFolder(QtWidgets.QFrame):
 
         main_ui = self.panel.main_ui
         bucket = ConnectionInfos.get("bucket")
-        data = awsv_io.get_bucket_folder_elements(folder_name=self.path)
-        main_ui.show_panel(panel_name=self.name, panel_path=self.path, data=data)
+        main_ui.show_panel(panel_name=self.name, panel_path=self.path)
 
 class PanelFileButtons(QtWidgets.QWidget):
 
