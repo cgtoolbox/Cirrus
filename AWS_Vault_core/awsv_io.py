@@ -406,13 +406,14 @@ class DownloadProjectThread(QtCore.QThread):
     start_sgn = QtCore.Signal()
     start_element_download_sgn = QtCore.Signal(str, int)  # element name, element size ( bytes )
     update_download_progress_sgn = QtCore.Signal(int)  # bytes downloaded
-    end_sgn = QtCore.Signal(int, int, str)  # statue, number of item downloaded, time spent
+    end_sgn = QtCore.Signal(int, int, str, int)  # statue, number of item downloaded, time spent, total size
 
     def __init__(self, bucket, local_path):
         super(DownloadProjectThread, self).__init__()
 
         self.bucket = bucket
         self.local_path = local_path + '/'
+        self.cancel = False
 
     def update_progress(self, b):
 
@@ -424,15 +425,23 @@ class DownloadProjectThread(QtCore.QThread):
 
         self.start_sgn.emit()
         try:
+            log.info("Fetching all bucket's objects")
             all_objects = self.bucket.objects.all()
         except Exception as e:
+            log.error(str(e))
             self.end_sgn.emit(-1, 0, str(e))
             return
 
         n_elements = 0
+        global_size = 0
 
         for obj in all_objects:
             
+            if self.cancel:
+                log.info("Cancelling project download ...")
+                self.end_sgn.emit(0, n_elements, "", global_size)
+                return
+
             key = obj.key
 
             # create folder
@@ -448,15 +457,19 @@ class DownloadProjectThread(QtCore.QThread):
             self.start_element_download_sgn.emit(key, obj.size)
 
             try:
+                log.info("Downloading file: " + path)
                 _object.download_file(path, Callback=self.update_progress)
             except Exception as e:
-                self.end_sgn.emit(-1, 0, str(e))
+                log.error(str(e))
+                self.end_sgn.emit(-1, 0, str(e), 0)
                 return
 
             n_elements += 1
+            global_size += obj.size
 
         end_time = datetime.datetime.now()
 
         time_elapsed = str(end_time - start_time)
 
-        self.end_sgn.emit(1, 0, time_elapsed)
+        self.end_sgn.emit(1, n_elements, time_elapsed, global_size)
+        log.info("Project files downloaded !")

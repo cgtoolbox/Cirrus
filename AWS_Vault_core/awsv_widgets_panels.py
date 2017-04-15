@@ -230,7 +230,7 @@ class PanelFile(PanelFolder):
 
         self.setToolTip("Local path: " + self.local_file_path + '\n' + \
                         "Cloud path: " + path + '\n' + \
-                        "File Size: " + '{0:.2f}'.format(self.local_file_size) + " mb")
+                        "File Size: " + '{0:.3f}'.format(self.local_file_size) + " mb")
 
     def init_buttons(self):
         

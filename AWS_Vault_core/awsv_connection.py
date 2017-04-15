@@ -1,5 +1,6 @@
 import os
 import boto3
+import botocore
 import datetime
 import logging
 log = logging.getLogger("root")
@@ -38,23 +39,12 @@ class ConnectionInfos(_singleton):
 def init_connection(bucket_name="", local_root="", reset=False):
     
     log.info("Init connection, bucket_name={}, local_root={}".format(bucket_name, local_root))
-
-    assert os.path.exists(local_root), "local root not valid: " + local_root
-    local_root = local_root.replace('\\', '/')
-
+    
     region_name = awsv_config.Config.get("BucketSettings", "DefaultRegionName", str)
 
     aws_session = boto3.session.Session(region_name=region_name)
     s3_client =  aws_session.client('s3', config= boto3.session.Config(signature_version='s3v4'))
     s3_resource = aws_session.resource('s3', config= boto3.session.Config(signature_version='s3v4'))
-
-    try:
-        s3_client.head_bucket(Bucket=bucket_name)
-        bucket = s3_resource.Bucket(bucket_name)
-
-    except botocore.exceptions.ClientError as e:
-        log.error(str(e))
-        bucket = None
 
     if reset:
         ConnectionInfos.reset()
@@ -62,10 +52,22 @@ def init_connection(bucket_name="", local_root="", reset=False):
     ConnectionInfos(s3_client = s3_client)
     ConnectionInfos(region = region_name)
     ConnectionInfos(s3_resource = s3_resource)
-    ConnectionInfos(s3_client = s3_client)
-    ConnectionInfos(bucket = bucket)
-    ConnectionInfos(bucket_name = bucket_name)
-    ConnectionInfos(local_root = local_root + '/')
-    ConnectionInfos(connection_time = datetime.datetime.now())
+    
+    if bucket_name != "" and local_root != "":
+
+        try:
+            s3_client.head_bucket(Bucket=bucket_name)
+            bucket = s3_resource.Bucket(bucket_name)
+
+        except botocore.exceptions.ClientError as e:
+            log.error(str(e))
+            bucket = None
+
+        local_root = local_root.replace('\\', '/')
+
+        ConnectionInfos(bucket = bucket)
+        ConnectionInfos(bucket_name = bucket_name)
+        ConnectionInfos(local_root = local_root + '/')
+        ConnectionInfos(connection_time = datetime.datetime.now())
 
     return s3_client, s3_resource

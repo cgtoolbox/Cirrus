@@ -45,7 +45,7 @@ class ProjectSelector(QtWidgets.QWidget):
                            QtWidgets.QSizePolicy.Expanding)
         main_layout.setAlignment(QtCore.Qt.AlignCenter)
         
-        self.open_project_button = QtWidgets.QPushButton(" Open a root folder")
+        self.open_project_button = QtWidgets.QPushButton(" Open a project")
         self.open_project_button.setIconSize(QtCore.QSize(64, 64))
         self.open_project_button.setIcon(QtGui.QIcon(ICONS + "folder_open.svg"))
         self.open_project_button.clicked.connect(self.main_ui.init_root)
@@ -96,10 +96,13 @@ class ProjectGetter(QtWidgets.QMainWindow):
 
         self.setWindowTitle("Get Project From Cloud")
         self.setWindowIcon(QtGui.QIcon(ICONS + "inbox.svg"))
-
+        self.setFixedHeight(170)
+        
         init_connection()
         self.client = ConnectionInfos.get("s3_client")
         self.resource = ConnectionInfos.get("s3_resource")
+
+        self.worker = None
 
         cw = QtWidgets.QWidget()
         main_layout = QtWidgets.QVBoxLayout()
@@ -191,9 +194,45 @@ class ProjectGetter(QtWidgets.QMainWindow):
                 return False
             raise e
 
+    def start_process(self):
+
+        self.start_btn.setVisible(False)
+        self.cancel_btn.setVisible(True)
+        self.elements_progress.setMinimum(0)
+        self.elements_progress.setMaximum(0)
+        self.nelements_lbl.setText("Fetching files...")
+
+    def start_download_item(self, item_name, item_size):
+
+        self.elements_progress.setMinimum(0)
+        self.elements_progress.setMaximum(item_size)
+        self.elements_progress.setValue(0)
+        self.nelements_lbl.setText(item_name)
+
+    def update_element_progress(self, b):
+
+        n = self.elements_progress.value() + b
+        self.elements_progress.setValue(n)
+
+    def download_done(self, statue, n_items, msg, global_size):
+
+        if statue > 0:
+            global_size = '{0:.3f} Mb'.format(global_size * 0.000001)
+            txt = str(n_items) + " elements downloaded in " + msg + ", Total size: " + global_size
+        elif statue == 0:
+            txt = "Download cancelled, {} elements downloaded.".format(n_items)
+        else:
+            txt = "ERROR: elements downloaded in " + msg
+
+        self.nelements_lbl.setText(txt)
+        self.start_btn.setVisible(True)
+        self.cancel_btn.setVisible(False)
+
     def cancel_download(self):
 
-        return
+        if self.worker is not None:
+            self.worker.cancel = True
+            self.worker.wait()
 
     def start_download(self):
 
@@ -211,7 +250,27 @@ class ProjectGetter(QtWidgets.QMainWindow):
                                     buttons = QtWidgets.QMessageBox.StandardButton.Yes|\
                                               QtWidgets.QMessageBox.StandardButton.No,
                                     parent=self)
-        ask.exec_()
+        if ask.exec_() == QtWidgets.QMessageBox.StandardButton.No: return
+
+        bucket = awsv_io.get_bucket(bucket_name)
+
+        if self.worker is not None:
+            self.worker.wait(1)
+            self.worker = None
+
+        prj_path = self.local_path + '/' + bucket_name
+        if not os.path.exists(prj_path):
+            os.makedirs(prj_path)
+
+        log.info("Downloading project: " + bucket_name)
+        log.info("Local path: " + prj_path)
+
+        self.worker = awsv_io.DownloadProjectThread(bucket, prj_path)
+        self.worker.start_sgn.connect(self.start_process)
+        self.worker.start_element_download_sgn.connect(self.start_download_item)
+        self.worker.update_download_progress_sgn.connect(self.update_element_progress)
+        self.worker.end_sgn.connect(self.download_done)
+        self.worker.start()
 
 class MainWidget(QtWidgets.QFrame):
 
@@ -326,12 +385,12 @@ class MainWidget(QtWidgets.QFrame):
         self.root_panel = p
 
         # add to history
-        history = tempfile.gettempdir() + os.sep + "aws_vault_projects"
-        if not os.path.exists(history):
-            with open(history, 'w') as f:
+        history_file = tempfile.gettempdir() + os.sep + "aws_vault_projects"
+        if not os.path.exists(history_file):
+            with open(history_file, 'w') as f:
                 f.write(root + '\n')
         else:
-            with open(history, 'r') as f:
+            with open(history_file, 'r') as f:
                 history = f.readlines()
 
             if root + '\n' in history:
@@ -340,10 +399,10 @@ class MainWidget(QtWidgets.QFrame):
             if len(history) > 10:
                 history.pop(0)
                 history.append(root + '\n')
-                with open(history, 'w') as f:
+                with open(history_file, 'w') as f:
                     f.writelines(history)
             else:
-                with open(history, 'a') as f:
+                with open(history_file, 'a') as f:
                     f.write(root + '\n')
 
     def closeEvent(self, event):
