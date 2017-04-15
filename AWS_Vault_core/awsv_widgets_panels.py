@@ -284,6 +284,10 @@ class PanelFile(PanelFolder):
 
         self.main_layout.addLayout(self.buttons_layout)
 
+    def mouseDoubleClickEvent(self, event):
+
+        return
+
     def refresh_state(self):
 
         return
