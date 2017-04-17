@@ -94,6 +94,8 @@ class ProjectGetter(QtWidgets.QMainWindow):
 
         self.setProperty("houdiniStyle", IS_HOUDINI)
 
+        self.mainui = parent
+
         self.setWindowTitle("Get Project From Cloud")
         self.setWindowIcon(QtGui.QIcon(ICONS + "inbox.svg"))
         self.setFixedHeight(170)
@@ -103,6 +105,7 @@ class ProjectGetter(QtWidgets.QMainWindow):
         self.resource = ConnectionInfos.get("s3_resource")
 
         self.worker = None
+        self.prj_path = ""
 
         cw = QtWidgets.QWidget()
         main_layout = QtWidgets.QVBoxLayout()
@@ -228,6 +231,14 @@ class ProjectGetter(QtWidgets.QMainWindow):
         self.start_btn.setVisible(True)
         self.cancel_btn.setVisible(False)
 
+        if os.path.exists(self.prj_path) and self.mainui:
+            r = QtWidgets.QMessageBox.question(self, "Open project",
+                                               "Open the project: {} ?".format(self.prj_path))
+            if r == QtWidgets.QMessageBox.Yes:
+                self.mainui.init_root(self.prj_path)
+
+        self.close()
+
     def cancel_download(self):
 
         if self.worker is not None:
@@ -246,7 +257,7 @@ class ProjectGetter(QtWidgets.QMainWindow):
             return
 
         ico = QtWidgets.QMessageBox.Question
-        ask = QtWidgets.QMessageBox(ico, "Confirm", "Download project: " + bucket_name,
+        ask = QtWidgets.QMessageBox(ico, "Confirm", "Download project: " + bucket_name + " ?",
                                     buttons = QtWidgets.QMessageBox.StandardButton.Yes|\
                                               QtWidgets.QMessageBox.StandardButton.No,
                                     parent=self)
@@ -265,6 +276,7 @@ class ProjectGetter(QtWidgets.QMainWindow):
         log.info("Downloading project: " + bucket_name)
         log.info("Local path: " + prj_path)
 
+        self.prj_path = prj_path
         self.worker = awsv_io.DownloadProjectThread(bucket, prj_path)
         self.worker.start_sgn.connect(self.start_process)
         self.worker.start_element_download_sgn.connect(self.start_download_item)
@@ -278,8 +290,9 @@ class MainWidget(QtWidgets.QFrame):
         super(MainWidget, self).__init__(parent=parent)
 
         self.setProperty("houdiniStyle", IS_HOUDINI)
-
-        #awsv_config.Config()
+        self.setWindowFlags(QtCore.Qt.Tool)
+        self.setObjectName("Vault")
+        self.setWindowTitle("Vault")
 
         self.pathbar = None
         self.panels = {}
@@ -296,12 +309,17 @@ class MainWidget(QtWidgets.QFrame):
         self.file_menu = self.main_menu.addMenu("File")
         self.open_proj_act = QtWidgets.QAction("Open a project", self)
         self.open_proj_act.setIcon(QtGui.QIcon(ICONS + "folder_open.svg"))
+        self.open_proj_act.triggered.connect(self.init_root)
+        self.close_proj_act = QtWidgets.QAction("Close Project", self)
+        self.close_proj_act.setIcon(QtGui.QIcon(ICONS + "close.svg"))
+        self.close_proj_act.triggered.connect(self.close_project)
         self.create_proj_act = QtWidgets.QAction("Create new project", self)
         self.create_proj_act.setIcon(QtGui.QIcon(ICONS + "add.svg"))
         self.download_proj_act = QtWidgets.QAction("Download a project", self)
         self.download_proj_act.triggered.connect(self.get_project)
         self.download_proj_act.setIcon(QtGui.QIcon(ICONS + "inbox.svg"))
         self.file_menu.addAction(self.open_proj_act)
+        self.file_menu.addAction(self.close_proj_act)
         self.file_menu.addAction(self.create_proj_act)
         self.file_menu.addAction(self.download_proj_act)
         self.options_menu = self.main_menu.addMenu("Options")
@@ -315,6 +333,26 @@ class MainWidget(QtWidgets.QFrame):
         self.main_layout.addWidget(self.init_button)
 
         self.setLayout(self.main_layout)
+
+    def close_project(self):
+
+        if not self.cur_panel: return
+
+        for panel in self.panels.itervalues():
+
+            panel.bucket = None
+            if panel.fetcher is not None:
+                panel.fetcher.terminate()
+
+            panel.setParent(None)
+            panel.deleteLater()
+
+        self.pathbar.setParent(None)
+        self.pathbar.deleteLater()
+
+        self.cur_panel = None
+
+        self.init_button.setVisible(True)
 
     def get_project(self):
 
@@ -355,15 +393,17 @@ class MainWidget(QtWidgets.QFrame):
         self.pathbar.set_current_level(panel_path)
 
     def init_root(self, root=""):
-        
-        log.info("Init root: " + root)
 
+        if self.cur_panel is not None:
+            self.close_project()
+        
         if not root:
             root = QtWidgets.QFileDialog.getExistingDirectory(self, "Pick a root folder")
             if not root: return
 
         root = root.replace('\\', '/')
         bucket_name = root.split('/')[-1]
+        log.info("Init root: " + root)
 
         # init the connection informations singleton
         init_connection(bucket_name=bucket_name, local_root=root, reset=True)
