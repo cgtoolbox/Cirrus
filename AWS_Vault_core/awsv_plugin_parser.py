@@ -39,8 +39,9 @@ class Plugin(object):
 
         m = getattr(self._module, self._on_get, None)
         if m:
-            log.warn("Plugin failed, exec_on_get, module {} doesn't have method {}".format(self._module, self._on_get))
             return m(path=kwargs["path"])
+
+        log.warn("Plugin failed, module {} doesn't have method {}".format(self._module, self._on_get))
         return None
 
     def exec_on_save(self, *args, **kwargs):
@@ -50,8 +51,9 @@ class Plugin(object):
 
         m = getattr(self._module, self._on_save, None)
         if m:
-            log.warn("Plugin failed, exec_on_save, module {} doesn't have method {}".format(self._module, self._on_save))
             return m(args, kwargs)
+
+        log.warn("Plugin failed, module {} doesn't have method {}".format(self._module, self._on_save))
         return None
 
     def exec_on_lock(self, *args, **kwargs):
@@ -61,8 +63,9 @@ class Plugin(object):
 
         m = getattr(self._module, self._on_lock, None)
         if m:
-            log.warn("Plugin failed, exec_on_lock, module {} doesn't have method {}".format(self._module, self._on_lock))
             return m(args, kwargs)
+
+        log.warn("Plugin failed, module {} doesn't have method {}".format(self._module, self._on_lock))
         return None
 
     def on_icon_clicked_menu(self, parent, **kwargs):
@@ -75,7 +78,7 @@ class Plugin(object):
         for k, v in self._on_icon_clicked.iteritems():
             m = getattr(self._module, k, None)
             if not m:
-                log.warn("Plugin failed, on_icon_clicked_menu, module {} doesn't have method {}".format(self._module, k))
+                log.warn("Plugin failed, module {} doesn't have method {}".format(self._module, k))
                 continue
             act = QtWidgets.QAction(v, parent)
             act.triggered.connect(lambda v=m: v(path=kwargs["path"],
@@ -149,6 +152,8 @@ def parse_plugin():
     
     if not valid_plugins:
         return
+
+    log.info(str(len(valid_plugins)) + " Plugin(s) loaded")
 
     PluginRepository.PLUGINS = valid_plugins
     PluginRepository.VALID_FILES = valid_files

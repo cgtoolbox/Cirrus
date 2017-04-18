@@ -1,8 +1,7 @@
-import os
-import hou
-
 def import_bgeo(**kwargs):
 
+    import os
+    import hou
     path = kwargs["path"]
     root, f = os.path.split(path)
     f = f.split('.')[0]
@@ -14,11 +13,13 @@ def import_bgeo(**kwargs):
 
 def preview_bgeo(**kwargs):
 
-    print "preview_bgeo"
-    print str(kwargs)
+    import subprocess
+    path = kwargs["path"]
+    subprocess.Popen(["gplay", path])
 
 def reload_geo(**kwargs):
     
+    import hou
     path = kwargs["path"]
     files = hou.sopNodeTypeCategory().nodeType("file")
     for f in files.instances():
