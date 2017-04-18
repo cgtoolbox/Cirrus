@@ -18,6 +18,8 @@ from AWS_Vault_core import awsv_widgets_pathbar as pathbar
 reload(pathbar)
 from AWS_Vault_core import awsv_widgets_inputs
 reload(awsv_widgets_inputs)
+from AWS_Vault_core import awsv_plugin_parser
+reload(awsv_plugin_parser)
 
 from AWS_Vault_core.awsv_config import Config
 from AWS_Vault_core.awsv_connection import ConnectionInfos
@@ -74,10 +76,13 @@ class PanelFolder(QtWidgets.QFrame):
         self.main_layout = QtWidgets.QHBoxLayout()
         self.main_layout.setSpacing(5)
         self.main_layout.setAlignment(QtCore.Qt.AlignLeft|QtCore.Qt.AlignHCenter)
-        self.ico = QtWidgets.QLabel("")
-        self.ico.setFixedHeight(22)
-        self.ico.setStyleSheet("background-color: transparent")
-        self.ico.setPixmap(QtGui.QIcon(ICONS + "folder.svg").pixmap(28, 28))
+        self.ico = QtWidgets.QPushButton("")
+        self.ico.setFlat(True)
+        self.ico.setObjectName("folderIco")
+        self.ico.setFixedHeight(28)
+        self.ico.setIconSize(QtCore.QSize(26,26))
+        self.ico.setStyleSheet("background-color: transparent;border: 0px")
+        self.ico.setIcon(QtGui.QIcon(ICONS + "folder.svg"))
         self.main_layout.addWidget(self.ico)
         self.label = QtWidgets.QLabel(name)
         self.label.setStyleSheet("background-color: transparent")
@@ -207,7 +212,7 @@ class PanelFileButtons(QtWidgets.QWidget):
         
         if self.state_fetcher is not None:
             self.state_fetcher.terminate()
-
+        
         self.state_fetcher = awsv_io.FetchStateThread(self.local_file_path)
         self.state_fetcher.end_sgn.connect(self.end_state_refreshing)
         self.state_fetcher.start_sgn.connect(self.start_state_refreshgin)
@@ -219,6 +224,7 @@ class PanelFile(PanelFolder):
 
         self.state = state
         root = ConnectionInfos.get("local_root")
+        
         self.local_file_path = root + path
         if os.path.exists(self.local_file_path):
             self.local_file_size = os.path.getsize(self.local_file_path) * 0.000001
@@ -240,9 +246,10 @@ class PanelFile(PanelFolder):
         file_extension = self.path.split('.')[-1]
         icon = ICONS + "file_types/" + file_extension + ".svg"
         if not os.path.exists(icon):
-            self.ico.setPixmap(QtGui.QIcon(ICONS + "document.svg").pixmap(28, 28))
+            self.ico.setIcon(QtGui.QIcon(ICONS + "document.svg"))
         else:
-            self.ico.setPixmap(QtGui.QIcon(icon).pixmap(28, 28))
+            self.ico.setIcon(QtGui.QIcon(icon))
+        self.ico.setObjectName("fileIco")
         
         self.activity_progress = QtWidgets.QProgressBar()
         self.activity_progress.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
@@ -283,12 +290,33 @@ class PanelFile(PanelFolder):
         self.buttons_layout.addWidget(self.file_buttons)
 
         self.main_layout.addLayout(self.buttons_layout)
+        
+        self.plugin = None
+        self.init_plugin()
+        
+    def init_plugin(self):
+        """ Init plugin if file extension matches any loaded plugins
+        """
+        root, f = os.path.split(self.local_file_path)
+        ex = f.split('.', 1)[-1]
+
+        if not ex in awsv_plugin_parser.PluginRepository.VALID_FILES:
+            return
+
+        for plugin in awsv_plugin_parser.PluginRepository.PLUGINS:
+            if ex in plugin.files:
+                self.plugin = plugin
+                break
+        self.plugin = plugin
+        self.icon_menu = plugin.on_icon_clicked_menu(parent=self,
+                                                     path=self.local_file_path,
+                                                     local_root=ConnectionInfos.get("local_root"),
+                                                     cloud_path=self.path)
+        
+        if self.icon_menu:
+            self.ico.clicked.connect(lambda: self.icon_menu.popup(QtGui.QCursor.pos()))
 
     def mouseDoubleClickEvent(self, event):
-
-        return
-
-    def refresh_state(self):
 
         return
 
@@ -329,6 +357,10 @@ class PanelFile(PanelFolder):
 
         ico = QtGui.QIcon(ICONS + "cloud_checkmark.png")
         self.file_buttons.is_on_cloud_button.setIcon(ico)
+
+        # check if a plugin is loaded, if yes, execute the "on_get" method of the plugin
+        if self.plugin:
+            self.plugin.exec_on_get(path=self.local_file_path)
 
     def get_from_cloud(self):
 

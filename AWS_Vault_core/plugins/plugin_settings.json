@@ -1,0 +1,43 @@
+{
+  "plugins": [
+    {
+      "enable": "True",
+      "software": [ "houdinicore", "hescape", "hindie", "houdinifx", "houdini" ],
+      "script": "houdini.py",
+      "binding": [
+        {
+          "files": [ "bgeo", "bgeo.gz", "bgeogz" ],
+          "methods": {
+            "on_get": "reload_geo",
+            "on_save": null,
+            "on_lock": null,
+            "on_icon_clicked": {
+              "import_bgeo": "Import geo to Current file",
+              "preview_bgeo": "Preview geo in Gplay"
+            }
+          }
+        },
+        {
+          "files": [ "hip", "hipnc", "hiplc" ],
+          "methods": {
+            "on_get": null,
+            "on_save": null,
+            "on_lock": null,
+            "on_icon_clicked": {
+              "merge_hip": "Merge Hip File",
+              "open_hip": "Open Hip file"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "enable": "True",
+      "software": [ "maya" ],
+      "script": "maya.py",
+      "binding": [ ]
+    }
+  ]
+}
+
+

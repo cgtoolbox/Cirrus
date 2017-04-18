@@ -34,6 +34,9 @@
     <Compile Include="awsv_objects.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="awsv_plugin_parser.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="awsv_widgets.py">
       <SubType>Code</SubType>
     </Compile>
@@ -49,6 +52,12 @@
     <Compile Include="main.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="plugins\houdini.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="plugins\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Test.py">
       <SubType>Code</SubType>
     </Compile>
@@ -60,6 +69,10 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="icons\" />
+    <Folder Include="plugins\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="plugins\plugin_settings.json" />
   </ItemGroup>
   <Import Project="$(PtvsTargetsFile)" Condition="Exists($(PtvsTargetsFile))" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="!Exists($(PtvsTargetsFile))" />

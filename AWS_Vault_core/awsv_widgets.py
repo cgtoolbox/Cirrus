@@ -21,6 +21,8 @@ from AWS_Vault_core import awsv_widgets_pathbar as pathbar
 reload(pathbar)
 from AWS_Vault_core import awsv_widgets_panels as panels
 reload(panels)
+from AWS_Vault_core import awsv_plugin_parser
+reload(awsv_plugin_parser)
 
 from AWS_Vault_core.awsv_connection import ConnectionInfos
 from AWS_Vault_core.awsv_connection import init_connection
@@ -288,6 +290,8 @@ class MainWidget(QtWidgets.QFrame):
 
     def __init__(self, parent=None):
         super(MainWidget, self).__init__(parent=parent)
+
+        awsv_plugin_parser.parse_plugin()
 
         self.setProperty("houdiniStyle", IS_HOUDINI)
         self.setWindowFlags(QtCore.Qt.Tool)

@@ -31,13 +31,14 @@ def get_bucket(bucket_name=""):
         return resource.Bucket(bucket_name)
 
     except botocore.exceptions.ClientError as e:
-        print str(e)
+        log.error(str(e))
         return None
 
 def get_metadata(object_path=""):
     """ Get the given object_path metadata on S3 vault, return None
         if not found.
     """
+    
     Bucket = ConnectionInfos.get("bucket")
     
     assert Bucket is not None, "Bucket is None"
@@ -45,10 +46,10 @@ def get_metadata(object_path=""):
     object_path = object_path.replace('\\', '/')
     local_root = ConnectionInfos.get("local_root")
     object_key = object_path.replace(local_root, '')
-    metadata_file = object_key.split('.')[0] + awsv_objects.METADATA_IDENTIFIER
+    metadata_file = object_key.split('/')[-1].split('.', 1)[0] + awsv_objects.METADATA_IDENTIFIER
 
     metadata_path = os.path.dirname(object_path) + '/' + metadata_file
-
+    
     try:
         obj = Bucket.Object(metadata_file)
         obj.download_file(metadata_path)
@@ -394,7 +395,7 @@ class FetchStateThread(QtCore.QThread):
             if not os.path.exists(self.local_file_path):
                 self.end_sgn.emit(awsv_objects.FileState.CLOUD_ONLY)
                 return
-
+            
             metadata = get_metadata(self.local_file_path)
             self.end_sgn.emit(awsv_objects.FileState.CLOUD_AND_LOCAL_LATEST)
 
