@@ -108,6 +108,7 @@ class PanelFileButtons(QtWidgets.QWidget):
         self.panelfile = parent
         self.local_file_path = self.panelfile.local_file_path
         self.state_fetcher = None
+        self.is_locked = awsv_objects.FileLockState.UNLOCKED
 
         self.buttons_layout = QtWidgets.QHBoxLayout()
 
@@ -123,7 +124,8 @@ class PanelFileButtons(QtWidgets.QWidget):
         self.save_to_cloud_button.setIcon(QtGui.QIcon(ICONS + "cloud_save.png"))
         self.save_to_cloud_button.setIconSize(QtCore.QSize(26, 26))
         self.save_to_cloud_button.setFixedSize(QtCore.QSize(28, 28))
-        self.save_to_cloud_button.setToolTip("Press this button to save the file to the cloud")
+        self.save_to_cloud_button.setToolTip("Press this button to save the file to the cloud\n"
+                                             "You must lock the file first")
         self.save_to_cloud_button.clicked.connect(self.panelfile.save_to_cloud)
         self.buttons_layout.addWidget(self.save_to_cloud_button)
 
@@ -142,9 +144,10 @@ class PanelFileButtons(QtWidgets.QWidget):
         self.lock_button = QtWidgets.QPushButton("")
         self.lock_button.setStyleSheet("""QPushButton{background-color: transparent;border: 0px}
                                              QPushButton:hover{background-color: #607e9c;border: 0px}""")
-        self.lock_button.setIcon(QtGui.QIcon(ICONS + "notlock.png"))
+        self.lock_button.setIcon(QtGui.QIcon(ICONS + "notlocked.png"))
         self.lock_button.setIconSize(QtCore.QSize(26, 26))
         self.lock_button.setFixedSize(QtCore.QSize(28, 28))
+        self.lock_button.clicked.connect(self.lock_file)
         self.buttons_layout.addWidget(self.lock_button)
 
         self.infos_button = QtWidgets.QPushButton("")
@@ -177,7 +180,7 @@ class PanelFileButtons(QtWidgets.QWidget):
         self.infos_button.setEnabled(toggle)
         self.refresh_button.setEnabled(toggle)
 
-    def start_state_refreshgin(self):
+    def start_state_refreshing(self):
 
         self.activity.start()
         self.activity.setVisible(True)
@@ -188,7 +191,7 @@ class PanelFileButtons(QtWidgets.QWidget):
         self.infos_button.setVisible(False)
         self.refresh_button.setVisible(False)
 
-    def end_state_refreshing(self, state):
+    def end_state_refreshing(self, state, metadata):
 
         self.activity.stop()
         self.activity.setVisible(False)
@@ -206,17 +209,92 @@ class PanelFileButtons(QtWidgets.QWidget):
         self.infos_button.setVisible(True)
         self.refresh_button.setVisible(True)
 
+        lock_user = metadata.get("user", "")
+        lock_message = metadata.get("lock_message", "No message")
+        lock_time = metadata.get("lock_time", "No Timestamp")
+        if lock_user == "":
+            self.is_locked = awsv_objects.FileLockState.UNLOCKED
+            self.lock_button.setIcon(QtGui.QIcon(ICONS + "notlocked.png"))
+            self.lock_button.setToolTip("File not locked")
+        elif lock_user == awsv_objects.ObjectMetadata.get_user_uid():
+            self.is_locked = awsv_objects.FileLockState.SELF_LOCKED
+            self.lock_button.setIcon(QtGui.QIcon(ICONS + "lock_self.png"))
+            tooltip = ("File locked by: " + lock_user + '\n'
+                       "Message: " + lock_message + '\n'
+                       "Locked since: " + lock_time + "")
+            self.lock_button.setToolTip(tooltip)
+        else:
+            self.is_locked = awsv_objects.FileLockState.LOCKED
+            self.lock_button.setIcon(QtGui.QIcon(ICONS + "locked.png"))
+            tooltip = ("File locked by: " + lock_user + '\n'
+                       "Message: " + lock_message + '\n'
+                       "Locked since: " + lock_time + "")
+            self.lock_button.setToolTip(tooltip)
+
         self.state_fetcher = None
 
-    def refresh_state(self):
+    def refresh_state(self, syncro=False):
         
         if self.state_fetcher is not None:
             self.state_fetcher.terminate()
         
         self.state_fetcher = awsv_io.FetchStateThread(self.local_file_path)
         self.state_fetcher.end_sgn.connect(self.end_state_refreshing)
-        self.state_fetcher.start_sgn.connect(self.start_state_refreshgin)
+        self.state_fetcher.start_sgn.connect(self.start_state_refreshing)
         self.state_fetcher.start()
+        if syncro:
+            self.state_fetcher.wait()
+        
+
+    def lock_file(self):
+
+        self.refresh_state(True)
+
+        if self.is_locked == awsv_objects.FileLockState.SELF_LOCKED:
+
+            ico = QtWidgets.QMessageBox.Warning
+            confirm_msg = "Do you want to unlock the file ?"
+            ask = QtWidgets.QMessageBox(ico, "Confirm", confirm_msg,
+                                        buttons = QtWidgets.QMessageBox.StandardButton.Yes|\
+                                                  QtWidgets.QMessageBox.StandardButton.No,
+                                        parent=self)
+            geo = ask.frameGeometry()
+        
+            ask.move(QtGui.QCursor.pos() - ( geo.topRight() * 3 ))
+            ask.setStyleSheet("""QMessageBox{background-color: #3e5975}
+                                 QFrame{background-color: #3e5975}
+                                 QLabel{background-color: #3e5975}""")
+            if ask.exec_() == QtWidgets.QMessageBox.StandardButton.No:
+                return
+            
+            toggle = False
+        else:
+            toggle = True
+
+        lock_message = ""
+
+        if toggle:
+            ask_lock_message = awsv_widgets_inputs.MessageInput(False, True, self)
+            ask_lock_message.exec_()
+            lock_message = ask_lock_message.message
+            if ask_lock_message.cancel:
+                return
+        
+        m = awsv_io.lock_object(object_path=self.local_file_path,
+                                toggle=toggle,
+                                lock_message=lock_message)
+
+        if toggle:
+            self.is_locked = awsv_objects.FileLockState.SELF_LOCKED
+            tooltip = ("File locked by: " + m.get("user", "") + '\n'
+                       "Message: " + m.get("lock_message", "No Message") + '\n'
+                       "Locked since: " + m.get("lock_time", "No timestamp") + "")
+            self.lock_button.setIcon(QtGui.QIcon(ICONS + "lock_self.png"))
+            self.lock_button.setToolTip(tooltip)
+        else:
+            self.is_locked = awsv_objects.FileLockState.UNLOCKED
+            self.lock_button.setIcon(QtGui.QIcon(ICONS + "notlocked.png"))
+            self.lock_button.setToolTip("File not locked")
 
 class PanelFile(PanelFolder):
 
@@ -397,6 +475,10 @@ class PanelFile(PanelFolder):
 
     def save_to_cloud(self):
 
+        if not self.file_buttons.is_locked == awsv_objects.FileLockState.SELF_LOCKED:
+            QtWidgets.QMessageBox.warning(self, "Error", "Can't save object to cloud, you have to lock the file first")
+            return
+
         if not os.path.exists(self.local_file_path):
             QtWidgets.QMessageBox.critical(self, "Error", "File not found: " + self.local_file_path)
             return
@@ -419,20 +501,29 @@ class PanelFile(PanelFolder):
         ask_msg = awsv_widgets_inputs.MessageInput(parent=self)
         ask_msg.move(QtGui.QCursor.pos() - ( geo.topRight() * 3 ))
         ask_msg.exec_()
+
+        if ask_msg.cancel:
+            return
+
         msg = ask_msg.message
+        if msg.strip() == "":
+            return
+        keep_locked = ask_msg.keep_locked
 
         self.activity_progress.setVisible(True)
 
         s = os.path.getsize(self.local_file_path)
         self.activity_progress.setMaximum(s)
 
-        self.worker = awsv_io.FileIOThread(self.local_file_path, message=msg)
+        self.worker = awsv_io.FileIOThread(self.local_file_path, message=msg,
+                                           keep_locked=keep_locked)
        
         self.worker.start_sgn.connect(self.start_progress)
         self.worker.end_sgn.connect(self.end_progress)
         self.worker.update_progress_sgn.connect(self.update_progress)
 
         self.worker.start()
+        self.worker.wait()
 
 class Panel(QtWidgets.QFrame):
 

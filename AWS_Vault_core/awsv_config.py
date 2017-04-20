@@ -26,12 +26,12 @@ def generate_config_file():
 
     config.add_section("BucketSettings")
     config.set("BucketSettings", "DefaultRegionName", "eu-central-1")
-    
-    config.add_section("DisplayOptions")
-    config.set('DisplayOptions', 'ShowLockedFiles', True)
-    config.set('DisplayOptions', 'ShowLocalFiles', True)
-    config.set('DisplayOptions', 'ShowCloudFiles', True)
-    config.set('DisplayOptions', 'ShowUpToDateFiles', True)
+
+    config.add_section("Log")
+    config.set("Log", "DebugLevel", "DEBUG")
+    config.set("Log", "LogMaxSizeMb", 10)
+    config.set("Log", "LogBackupCount", 2)
+    config.set("Log", "LogFilePath", "default")
 
     with open(cfgfile_path, 'w') as cfgfile:
         config.write(cfgfile)

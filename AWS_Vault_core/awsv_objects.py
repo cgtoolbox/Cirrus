@@ -24,6 +24,12 @@ class FileState():
     CLOUD_AND_LOCAL_LATEST = 2
     CLOUD_AND_LOCAL_NOT_LATEST = 3
 
+class FileLockState():
+
+    UNLOCKED = 0
+    LOCKED = 1
+    SELF_LOCKED = 2
+
 class ObjectState(object):
 
     __slot__ = ["local_path", "cloud_path", "locked", "message",
@@ -35,19 +41,22 @@ class ObjectState(object):
 
 class ObjectMetadata(object):
 
-    __slots__ = ["checked_out", "user", "time",
-                 "message", "references", "extra_infos",
-                 "__node_uuid", "__root", "__object_key"]
+    __slots__ = ["user", "creation_time", "latest_upload", "latest_upload_user",
+                 "lock_message", "lock_time", "upload_message", "references", "extra_infos",
+                 "__root", "__object_key"]
 
     def __init__(self, object_key=""):
 
         self.__root = ConnectionInfos.get("local_root")
         self.__object_key = object_key.split('.')[0] + METADATA_IDENTIFIER
         
-        self.checked_out = False
-        self.user = ObjectMetadata.get_user_uid()
-        self.time = str(datetime.datetime.now())
-        self.message = ""
+        self.user = ""
+        self.latest_upload_user = ""
+        self.creation_time = datetime.datetime.now().ctime()
+        self.lock_message = ""
+        self.lock_time = ""
+        self.upload_message = ""
+        self.latest_upload = ""
         self.references = []
         self.extra_infos = None
 
@@ -56,13 +65,18 @@ class ObjectMetadata(object):
         return getpass.getuser() + '@' + socket.gethostname()
 
     def load(self, metadata):
-
-        self.checked_out = metadata.get("checked_out", False)
+        
         self.user = metadata.get("user", "")
-        self.time = metadata.get("time", "")
-        self.message = metadata.get("message", "")
+        self.latest_upload_user = metadata.get("latest_upload_user", "")
+        self.latest_upload = metadata.get("latest_upload", "")
+        self.upload_message = metadata.get("upload_message", "")
         self.references = metadata.get("references", [])
         self.extra_infos = metadata.get("extra_infos")
+        self.lock_time = metadata.get("lock_time", "")
+
+        lm = metadata.get("lock_message")
+        if lm is not None and lm != "None":
+            self.lock_message = lm
 
     @property
     def data(self):

@@ -7,6 +7,15 @@ log = logging.getLogger("root")
 
 from PySide2 import QtWidgets
 
+"""
+    Plugin are python scripts executed after certain actions:
+     "on_get" will be executed after the user downloaded a file from cloud.
+     "on_lock" will be executed after the user locked a file.
+     "on_save" will be executed before the user save a file to the cloud.
+     "on_icon_clicked" generates a QMenu according to the methods definied.
+                       the menu will pop up when the user click on the file's icon.
+"""
+
 plugin_settings = os.path.dirname(__file__) + os.sep + "plugins" + os.sep + "plugin_settings.json"
 plugins_scripts = os.path.dirname(__file__) + os.sep + "plugins"
 EXE = sys.executable

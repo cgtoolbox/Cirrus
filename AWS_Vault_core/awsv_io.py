@@ -34,6 +34,47 @@ def get_bucket(bucket_name=""):
         log.error(str(e))
         return None
 
+def lock_object(object_path="", toggle=True, lock_message=""):
+    """ Lock a given file according to "toggle" bool.
+        An optional lock_message can be added to the metadata.
+    """
+
+    Bucket = ConnectionInfos.get("bucket")
+    
+    assert Bucket is not None, "Bucket is None"
+    assert os.path.exists(object_path), "Object path not valid" + object_path
+
+    local_root = ConnectionInfos.get("local_root")
+    object_key = object_path.replace(local_root, '')
+
+    log.debug("Lock file: " + object_path + " (" + str(toggle) + ')')
+
+    now = datetime.datetime.now()
+
+    if toggle:
+        user_uid = awsv_objects.ObjectMetadata.get_user_uid()
+        lock_time = now.ctime()
+    else:
+        user_uid = ""
+        lock_time = ""
+        lock_message = ""
+
+    metadata = get_metadata(object_path)
+    if not metadata:
+        
+        metadata = {"lock_message":lock_message,
+                    "user":user_uid,
+                    "latest_upload_user":"",
+                    "lock_time":lock_time}
+        generate_metadata(object_key=object_key, metadata=metadata)
+    else:
+        metadata["lock_message"] = lock_message
+        metadata["user"] = user_uid
+        metadata["lock_time"] = lock_time
+        generate_metadata(object_key=object_key, metadata=metadata)
+
+    return metadata
+
 def get_metadata(object_path=""):
     """ Get the given object_path metadata on S3 vault, return None
         if not found.
@@ -46,10 +87,11 @@ def get_metadata(object_path=""):
     object_path = object_path.replace('\\', '/')
     local_root = ConnectionInfos.get("local_root")
     object_key = object_path.replace(local_root, '')
-    metadata_file = object_key.split('/')[-1].split('.', 1)[0] + awsv_objects.METADATA_IDENTIFIER
-
-    metadata_path = os.path.dirname(object_path) + '/' + metadata_file
+    metadata_file = object_key.split('.', 1)[0] + awsv_objects.METADATA_IDENTIFIER
+    metadata_path = os.path.dirname(object_path) + '/' + metadata_file.split('/')[-1]
     
+    log.debug("Access metadata file: " + metadata_path)
+
     try:
         obj = Bucket.Object(metadata_file)
         obj.download_file(metadata_path)
@@ -64,7 +106,7 @@ def get_metadata(object_path=""):
         else:
             raise e
 
-def send_object(object_path="", message="", callback=None):
+def send_object(object_path="", message="", callback=None, keep_locked=False):
     """ Send an object to ams S3 server, create new file if doesn't exist
         or update exsiting file. Arg callback is a funciton called to update
         transfert information ( in bytes )
@@ -81,17 +123,25 @@ def send_object(object_path="", message="", callback=None):
     os.chmod(object_path, S_IREAD|S_IRGRP|S_IROTH)
 
     user_uid = awsv_objects.ObjectMetadata.get_user_uid()
-    now = datetime.datetime.now()
+    if keep_locked:
+        user = user_uid
+        lock_message = "None"
+    else:
+        user = ""
+        lock_message = ""
 
-    metadata = {"message":message,
-                "time":now.ctime(),
-                "user":user_uid}
+    now = datetime.datetime.now()
+    metadata = {"upload_message":message,
+                "latest_upload":now.ctime(),
+                "lock_message":lock_message,
+                "user":user,
+                "latest_upload_user":user_uid}
 
     Bucket.upload_file(object_path, object_key,
                        ExtraArgs={"Metadata":metadata},
                        Callback=callback)
 
-    generate_metadata(object_key, message=message)
+    generate_metadata(object_key, metadata=metadata)
 
 def get_object_size(object_path=""):
     """ Get object size from S3 cloud
@@ -147,16 +197,16 @@ def get_object(object_path="", version_id="", callback=None):
         with open(metadata_file, 'w') as f:
             json.dump(metadata, f, indent=4)
 
-def generate_metadata(object_key=None, checked_out=False,
-                      message="Metadata creation"):
+def generate_metadata(object_key=None, metadata=None):
     """ Create a json metadata file locally and set it on s3 server.
     """
     Bucket = ConnectionInfos.get("bucket")
     assert Bucket is not None, "Bucket is None"
 
     m = awsv_objects.ObjectMetadata(object_key=object_key)
-    m.checked_out = checked_out
-    m.message = message
+    if metadata:
+        m.load(metadata)
+
     metadata_file = m.dump()
 
     Bucket.upload_file(metadata_file, Key=m.object_key)
@@ -218,7 +268,7 @@ def get_local_folder_element(folder):
         log.error("Folder {} doesn't exists".format(folder))
         return None
 
-    log.info("Get local folder elements " + folder)
+    log.debug("Get local folder elements " + folder)
 
     elements = os.listdir(folder)
     local_root = ConnectionInfos.get("local_root")
@@ -264,7 +314,7 @@ def get_bucket_folder_elements(folder_name=""):
     """
     Bucket = ConnectionInfos.get("bucket")
 
-    log.info("Get cloud folder element " + folder_name)
+    log.debug("Get cloud folder element " + folder_name)
 
     if folder_name != "":
         if not folder_name.endswith('/'): folder_name += '/'
@@ -354,11 +404,13 @@ class FileIOThread(QtCore.QThread):
     update_progress_sgn = QtCore.Signal(int)
     end_sgn = QtCore.Signal(int)
 
-    def __init__(self, local_file_path, mode=0, message=""):
+    def __init__(self, local_file_path, mode=0, message="",
+                 keep_locked=False):
         """ mode: 0 => upload, 1 => download
         """
         super(FileIOThread, self).__init__()
         self.local_file_path = local_file_path
+        self.keep_locked = keep_locked
         self.mode = mode
         self.message = message
 
@@ -371,7 +423,7 @@ class FileIOThread(QtCore.QThread):
         self.start_sgn.emit(self.mode)
         if self.mode == 0:
             send_object(self.local_file_path, message=self.message,
-                        callback=self.update_progress)
+                        callback=self.update_progress, keep_locked=self.keep_locked)
         else:
             get_object(self.local_file_path, callback=self.update_progress)
         self.end_sgn.emit(self.mode)
@@ -380,7 +432,7 @@ class FetchStateThread(QtCore.QThread):
     """ Used in PanelFileButtons when refresh state is needed
     """
     start_sgn = QtCore.Signal()
-    end_sgn = QtCore.Signal(int)
+    end_sgn = QtCore.Signal(int, dict)
 
     def __init__(self, local_file_path):
         super(FetchStateThread, self).__init__()
@@ -390,17 +442,21 @@ class FetchStateThread(QtCore.QThread):
 
         self.start_sgn.emit()
         is_on_cloud = check_object(self.local_file_path)
+        metadata = get_metadata(self.local_file_path)
+        if not metadata:
+            metadata = {}
+
         if is_on_cloud:
 
             if not os.path.exists(self.local_file_path):
-                self.end_sgn.emit(awsv_objects.FileState.CLOUD_ONLY)
+                self.end_sgn.emit(awsv_objects.FileState.CLOUD_ONLY, metadata)
                 return
             
-            metadata = get_metadata(self.local_file_path)
-            self.end_sgn.emit(awsv_objects.FileState.CLOUD_AND_LOCAL_LATEST)
+            
+            self.end_sgn.emit(awsv_objects.FileState.CLOUD_AND_LOCAL_LATEST, metadata)
 
         else:
-            self.end_sgn.emit(awsv_objects.FileState.LOCAL_ONLY)
+            self.end_sgn.emit(awsv_objects.FileState.LOCAL_ONLY, metadata)
 
 class DownloadProjectThread(QtCore.QThread):
 
@@ -458,7 +514,7 @@ class DownloadProjectThread(QtCore.QThread):
             self.start_element_download_sgn.emit(key, obj.size)
 
             try:
-                log.info("Downloading file: " + path)
+                log.debug("Downloading file: " + path)
                 _object.download_file(path, Callback=self.update_progress)
             except Exception as e:
                 log.error(str(e))
