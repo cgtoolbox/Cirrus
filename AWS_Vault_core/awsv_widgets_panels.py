@@ -12,6 +12,8 @@ from PySide2 import QtCore
 
 from AWS_Vault_core import awsv_io
 reload(awsv_io)
+from AWS_Vault_core import awsv_threading
+reload(awsv_threading)
 from AWS_Vault_core import awsv_objects
 reload(awsv_objects)
 from AWS_Vault_core import awsv_widgets_pathbar as pathbar
@@ -42,8 +44,8 @@ class ActivityWidget(QtWidgets.QWidget):
         self.movie = QtGui.QMovie(ICONS + "loading.gif", parent=self)
 
         self.movie_screen = QtWidgets.QLabel()
-        self.movie_screen.setSizePolicy(QtWidgets.QSizePolicy.Expanding, 
-                                        QtWidgets.QSizePolicy.Expanding)        
+        self.movie_screen.setSizePolicy(QtWidgets.QSizePolicy.Minimum, 
+                                        QtWidgets.QSizePolicy.Minimum)        
         self.movie_screen.setAlignment(QtCore.Qt.AlignCenter)
         self.movie_screen.setMovie(self.movie)
         
@@ -107,7 +109,6 @@ class PanelFileButtons(QtWidgets.QWidget):
 
         self.panelfile = parent
         self.local_file_path = self.panelfile.local_file_path
-        self.state_fetcher = None
         self.is_locked = awsv_objects.FileLockState.UNLOCKED
 
         self.buttons_layout = QtWidgets.QHBoxLayout()
@@ -233,18 +234,12 @@ class PanelFileButtons(QtWidgets.QWidget):
 
         self.state_fetcher = None
 
-    def refresh_state(self, syncro=False):
+    def refresh_state(self):
         
-        if self.state_fetcher is not None:
-            self.state_fetcher.terminate()
-        
-        self.state_fetcher = awsv_io.FetchStateThread(self.local_file_path)
-        self.state_fetcher.end_sgn.connect(self.end_state_refreshing)
-        self.state_fetcher.start_sgn.connect(self.start_state_refreshing)
-        self.state_fetcher.start()
-        if syncro:
-            self.state_fetcher.wait()
-        
+        state_fetcher = awsv_threading.FetchStateThread(self.local_file_path)
+        state_fetcher.signals.end_sgn.connect(self.end_state_refreshing)
+        state_fetcher.signals.start_sgn.connect(self.start_state_refreshing)
+        QtCore.QThreadPool.globalInstance().start(state_fetcher)
 
     def lock_file(self):
 
@@ -308,7 +303,6 @@ class PanelFile(PanelFolder):
             self.local_file_size = os.path.getsize(self.local_file_path) * 0.000001
         else:
             self.local_file_size = 0.0
-        self.worker = None
 
         super(PanelFile, self).__init__(name=name, path=path, parent=parent)
 
@@ -465,13 +459,13 @@ class PanelFile(PanelFolder):
 
         self.activity_progress.setVisible(True)
 
-        self.worker = awsv_io.FileIOThread(self.local_file_path, mode=1)
+        worker = awsv_threading.FileIOThread(self.local_file_path, mode=1)
        
-        self.worker.start_sgn.connect(self.start_progress)
-        self.worker.end_sgn.connect(self.end_progress)
-        self.worker.update_progress_sgn.connect(self.update_progress)
+        worker.signals.start_sgn.connect(self.start_progress)
+        worker.signals.end_sgn.connect(self.end_progress)
+        worker.signals.update_progress_sgn.connect(self.update_progress)
 
-        self.worker.start()
+        QtCore.QThreadPool.globalInstance().start(worker)
 
     def save_to_cloud(self):
 
@@ -534,6 +528,7 @@ class Panel(QtWidgets.QFrame):
 
         self.subfolder = subfolder
         self.fetcher = None
+        self.cur_folder_id = 0
         
         self.setProperty("houdiniStyle", IS_HOUDINI)
         self.setObjectName("panel_" + panel_name)
@@ -551,9 +546,15 @@ class Panel(QtWidgets.QFrame):
         self.ico.setFixedHeight(22)
         self.ico.setStyleSheet("background-color: transparent")
         self.ico.setPixmap(QtGui.QIcon(ICONS + "folder_open.svg").pixmap(28, 28))
+
         self.header_layout.addWidget(self.ico)
         self.header_layout.addWidget(QtWidgets.QLabel(panel_name.split('/')[-1]))
         self.header_layout.addStretch(1)
+
+        self.activity_w = ActivityWidget()
+        self.activity_w.setVisible(False)
+        self.header_layout.addWidget(self.activity_w)
+
         self.refresh_button = QtWidgets.QPushButton("")
         self.refresh_button.setFixedHeight(28)
         self.refresh_button.setFixedWidth(28)
@@ -567,10 +568,6 @@ class Panel(QtWidgets.QFrame):
         self.header.setLayout(self.header_layout)
         self.main_layout.addWidget(self.header)
         self.header.setStyleSheet("""QFrame{background-color: #2e3241}""")
-
-        # acticity monitor
-        self.activity_w = ActivityWidget()
-        self.main_layout.addWidget(self.activity_w)
 
         # elements
         self.elements = []
@@ -607,21 +604,50 @@ class Panel(QtWidgets.QFrame):
 
         if self.fetcher is not None:
             self.fetcher.cancel = True
-            self.fetcher.wait(2)
+            #self.fetcher.wait(2)
             self.fetcher = None
             time.sleep(1)
 
-        self.fetcher = awsv_io.ElementFetcher()
+        self.fetcher = awsv_threading.ElementFetcherThread()
         self.fetcher.bucket = ConnectionInfos.get("bucket")
         self.fetcher.folder_name = self.subfolder
-        self.fetcher.end.connect(self.element_fetched)
-        self.fetcher.start()
+        self.fetcher.signals.add_folder.connect(self.add_folder)
+        self.fetcher.signals.add_element.connect(self.add_element)
+        self.fetcher.signals.start_sgn.connect(self.element_fetching_start)
+        self.fetcher.signals.end.connect(self.element_fetching_end)
+        QtCore.QThreadPool.globalInstance().start(self.fetcher)
+        
+    def add_element(self, f):
+
+        file_name = f.split('/')[-1]
+        w = PanelFile(name=file_name, path=f, parent=self)
+        self.elements.append(w)
+        self.elements_layout.addWidget(w)
+        
+
+    def add_folder(self, f):
+        
+        folder_name = f.split('/')[-1]
+        w = PanelFolder(name=folder_name, path=f+'/', parent=self)
+        self.elements.append(w)
+        self.elements_layout.insertWidget(self.cur_folder_id, w)
+        self.cur_folder_id += 1
+
+    def element_fetching_start(self):
+
+        self.cur_folder_id = 0
+        self.refresh_button.setVisible(False)
+        self.activity_w.setVisible(True)
+
+    def element_fetching_end(self):
+
+        self.refresh_button.setVisible(True)
+        self.activity_w.setVisible(False)
 
     def element_fetched(self, data):
 
         if data is None: return
-
-        self.fetcher.wait(1)
+        
         self.fetcher = None
 
         cloud_data = data[0]

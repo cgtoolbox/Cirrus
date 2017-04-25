@@ -13,6 +13,8 @@ from PySide2 import QtCore
 
 from AWS_Vault_core import awsv_io
 reload(awsv_io)
+from AWS_Vault_core import awsv_threading
+reload(awsv_threading)
 from AWS_Vault_core import awsv_objects
 reload(awsv_objects)
 from AWS_Vault_core import awsv_config
@@ -279,7 +281,7 @@ class ProjectGetter(QtWidgets.QMainWindow):
         log.info("Local path: " + prj_path)
 
         self.prj_path = prj_path
-        self.worker = awsv_io.DownloadProjectThread(bucket, prj_path)
+        self.worker = awsv_threading.DownloadProjectThread(bucket, prj_path)
         self.worker.start_sgn.connect(self.start_process)
         self.worker.start_element_download_sgn.connect(self.start_download_item)
         self.worker.update_download_progress_sgn.connect(self.update_element_progress)
@@ -342,12 +344,11 @@ class MainWidget(QtWidgets.QFrame):
 
         if not self.cur_panel: return
 
+        QtCore.QThreadPool.globalInstance().waitForDone(1)
+
         for panel in self.panels.itervalues():
 
             panel.bucket = None
-            if panel.fetcher is not None:
-                panel.fetcher.terminate()
-
             panel.setParent(None)
             panel.deleteLater()
 
@@ -451,10 +452,9 @@ class MainWidget(QtWidgets.QFrame):
 
     def closeEvent(self, event):
         
-        for panel in self.panels.itervalues():
-            
+        QtCore.QThreadPool.globalInstance().waitForDone(1)
+
+        for panel in self.panels.itervalues():            
             panel.bucket = None
-            if panel.fetcher is not None:
-                panel.fetcher.terminate()
 
         super(MainWidget, self).closeEvent(event)
