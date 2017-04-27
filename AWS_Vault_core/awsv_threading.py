@@ -132,7 +132,7 @@ class FetchStateThread(QtCore.QRunnable):
     def run(self):
 
         self.signals.start_sgn.emit()
-        is_on_cloud = check_object(self.local_file_path)
+        is_on_cloud = check_object(self.local_file_path) is not None
         metadata = get_metadata(self.local_file_path)
         if not metadata:
             metadata = {}

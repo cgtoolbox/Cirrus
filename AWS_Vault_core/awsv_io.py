@@ -34,6 +34,20 @@ def get_bucket(bucket_name=""):
         log.error(str(e))
         return None
 
+def get_object_versions(object_path=""):
+    """ Return all object versions enumerator.
+    """
+    Bucket = ConnectionInfos.get("bucket")
+    local_root = ConnectionInfos.get("local_root")
+    object_path = object_path.replace('\\', '/')
+    object_key = object_path.replace(local_root, '')
+
+    try:
+        return Bucket.object_versions.filter(Prefix=object_key)
+    except botocore.exceptions.ClientError as e:
+        log.warning(str(e))
+        return []
+
 def lock_object(object_path="", toggle=True, lock_message=""):
     """ Lock a given file according to "toggle" bool.
         An optional lock_message can be added to the metadata.
@@ -353,7 +367,7 @@ def get_bucket_folder_elements(folder_name=""):
 
     return result
 
-def check_object(object_path=""):
+def check_object(object_path="", version_id=None):
 
     client = ConnectionInfos.get("s3_client")
     bucket_name = ConnectionInfos.get("bucket_name")
@@ -361,10 +375,12 @@ def check_object(object_path=""):
     object_path = object_path.replace('\\', '/')
     local_root = ConnectionInfos.get("local_root")
     object_key = object_path.replace(local_root, '')
-
+    
     try:
-        client.head_object(Bucket=bucket_name, Key=object_key)
-        return True
+        if version_id is None:
+            return client.head_object(Bucket=bucket_name, Key=object_key)
+        else:
+            return client.head_object(Bucket=bucket_name, Key=object_key, VersionId=version_id)
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == "404":
             return False

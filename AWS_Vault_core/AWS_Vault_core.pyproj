@@ -40,6 +40,9 @@
     <Compile Include="awsv_threading.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="awsv_versions_getter.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="awsv_widgets.py">
       <SubType>Code</SubType>
     </Compile>

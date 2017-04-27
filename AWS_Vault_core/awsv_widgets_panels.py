@@ -12,6 +12,8 @@ from PySide2 import QtCore
 
 from AWS_Vault_core import awsv_io
 reload(awsv_io)
+from AWS_Vault_core import awsv_versions_getter
+reload(awsv_versions_getter)
 from AWS_Vault_core import awsv_threading
 reload(awsv_threading)
 from AWS_Vault_core import awsv_objects
@@ -157,6 +159,7 @@ class PanelFileButtons(QtWidgets.QWidget):
         self.infos_button.setIcon(QtGui.QIcon(ICONS + "info.svg"))
         self.infos_button.setIconSize(QtCore.QSize(26, 26))
         self.infos_button.setFixedSize(QtCore.QSize(28, 28))
+        self.infos_button.clicked.connect(self.open_versions)
         self.buttons_layout.addWidget(self.infos_button)
 
         self.refresh_button = QtWidgets.QPushButton("")
@@ -290,6 +293,12 @@ class PanelFileButtons(QtWidgets.QWidget):
             self.is_locked = awsv_objects.FileLockState.UNLOCKED
             self.lock_button.setIcon(QtGui.QIcon(ICONS + "notlocked.png"))
             self.lock_button.setToolTip("File not locked")
+
+    def open_versions(self):
+
+        self.w = awsv_versions_getter.VersionPicker(self.local_file_path,
+                                                    parent=self)
+        self.w.exec_()
 
 class PanelFile(PanelFolder):
 
