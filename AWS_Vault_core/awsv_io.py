@@ -120,6 +120,21 @@ def get_metadata(object_path=""):
         else:
             raise e
 
+def generate_metadata(object_key=None, metadata=None):
+    """ Create a json metadata file locally and set it on s3 server.
+    """
+    Bucket = ConnectionInfos.get("bucket")
+    assert Bucket is not None, "Bucket is None"
+
+    m = awsv_objects.ObjectMetadata(object_key=object_key)
+    if metadata:
+        m.load(metadata)
+
+    metadata_file = m.dump()
+
+    Bucket.upload_file(metadata_file, Key=m.object_key)
+
+
 def send_object(object_path="", message="", callback=None, keep_locked=False):
     """ Send an object to ams S3 server, create new file if doesn't exist
         or update exsiting file. Arg callback is a funciton called to update
@@ -155,6 +170,8 @@ def send_object(object_path="", message="", callback=None, keep_locked=False):
                        ExtraArgs={"Metadata":metadata},
                        Callback=callback)
 
+    metadata["version_id"] = get_cloud_version_id(object_path)
+
     generate_metadata(object_key, metadata=metadata)
 
 def get_object_size(object_path=""):
@@ -187,9 +204,13 @@ def get_object(object_path="", version_id="", callback=None):
 
     log.info("Downloading file: " + object_path + " version_id: " + version_id)
 
+    extra_args = None
+    if version_id:
+        extra_args = {"VersionId":version_id}
+
     # file is downloaded first to a temp file then copied to the right file
     temp_file = object_path + ".tmp"  
-    Bucket.download_file(object_key, temp_file, Callback=callback)
+    Bucket.download_file(object_key, temp_file, ExtraArgs=extra_args, Callback=callback)
 
     if os.path.exists(object_path):
         os.chmod(object_path, S_IWRITE)
@@ -211,19 +232,66 @@ def get_object(object_path="", version_id="", callback=None):
         with open(metadata_file, 'w') as f:
             json.dump(metadata, f, indent=4)
 
-def generate_metadata(object_key=None, metadata=None):
-    """ Create a json metadata file locally and set it on s3 server.
+def get_local_version_id(object_path):
+    """ Get the local file version_id saved in metadata
     """
-    Bucket = ConnectionInfos.get("bucket")
-    assert Bucket is not None, "Bucket is None"
+    object_path = object_path.replace('\\', '/')
+    local_root = ConnectionInfos.get("local_root")
+    metadata_file = object_path.split('.', 1)[0] + awsv_objects.METADATA_IDENTIFIER
 
-    m = awsv_objects.ObjectMetadata(object_key=object_key)
-    if metadata:
-        m.load(metadata)
+    if not os.path.exists(metadata_file):
+        return None
 
-    metadata_file = m.dump()
+    with open(metadata_file) as f:
+        data = json.load(f)
 
-    Bucket.upload_file(metadata_file, Key=m.object_key)
+    ver = data.get("version_id", "")
+    if ver == "":
+        return None
+    
+    return ver
+    
+def get_cloud_version_id(object_path):
+    """ Get the latest version_id from the cloud
+    """
+    client = ConnectionInfos.get("s3_client")
+    bucket_name = ConnectionInfos.get("bucket_name")
+
+    object_path = object_path.replace('\\', '/')
+    local_root = ConnectionInfos.get("local_root")
+    object_key = object_path.replace(local_root, '')
+
+    try:
+        meta = client.head_object(Bucket=bucket_name, Key=object_key)
+        cloud_ver = meta["VersionId"]
+        return cloud_ver
+
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] == "404":
+            return None
+        raise e
+
+def is_local_file_latest(object_path):
+    """ Check if the local file version id matches the cloud one
+        If the file doesn't exist on the cloud it will be tagged
+        as up to date.
+    """
+    local_ver = get_local_version_id(object_path)
+    cloud_ver = get_cloud_version_id(object_path)
+
+    print("local_ver " + str(local_ver))
+    print("cloud_ver " + str(cloud_ver))
+
+    if local_ver is None and cloud_ver is None:
+        return True
+
+    if local_ver is None and not cloud_ver is None:
+        return False
+
+    if cloud_ver is None and not local_ver is None:
+        return True
+
+    return cloud_ver == cloud_ver
 
 def checkout_file(toggle, object_path="", message=""):
     """ Checkout the given object on aws s3 server, that means it sets
@@ -368,7 +436,8 @@ def get_bucket_folder_elements(folder_name=""):
     return result
 
 def check_object(object_path="", version_id=None):
-
+    """ Check if the object exists on the cloud
+    """
     client = ConnectionInfos.get("s3_client")
     bucket_name = ConnectionInfos.get("bucket_name")
 

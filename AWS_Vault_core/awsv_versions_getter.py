@@ -53,7 +53,7 @@ class VersionPickerThread(QtCore.QThread):
 
                 meta = head.get("Metadata")
                 if meta:
-                    message = meta.get("message", "None")
+                    message = meta.get("upload_message", "None")
                     user = meta.get("submit_user", "None")
 
 
@@ -75,7 +75,7 @@ class VersionPicker(QtWidgets.QDialog):
         self.setWindowTitle("Version Picker")
 
         self.object_path = object_path
-        self.version = []
+        self.version_selected = None
 
         if not os.path.exists(object_path):
             main_layout.addWidget(QtWidgets.QLabel("Error, path not valid:" + object_path))
@@ -137,14 +137,14 @@ class VersionPicker(QtWidgets.QDialog):
         self.elements_progress.setMaximum(0)
 
     def download_version(self, version_id):
-
-        print version_id
+        
+        self.version_selected = version_id
+        self.close()
 
     def append_version(self, date, size, is_latest, version_id,
                        delete_marker, message, user):
 
         self.table.setRowCount(self.n_items + 1)
-        self.version.append(version_id)
 
         # latest
         time_lbl = QtWidgets.QLabel(str(date.ctime()))

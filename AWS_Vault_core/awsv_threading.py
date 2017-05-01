@@ -137,6 +137,9 @@ class FetchStateThread(QtCore.QRunnable):
         if not metadata:
             metadata = {}
 
+        is_latest = is_local_file_latest(self.local_file_path)
+        print is_latest
+
         if is_on_cloud:
 
             if not os.path.exists(self.local_file_path):
@@ -160,7 +163,7 @@ class FileIOThread(QtCore.QRunnable):
 
     
     def __init__(self, local_file_path, mode=0, message="",
-                 keep_locked=False):
+                 keep_locked=False, version_id=None):
         """ mode: 0 => upload, 1 => download
         """
         super(FileIOThread, self).__init__()
@@ -172,6 +175,7 @@ class FileIOThread(QtCore.QRunnable):
         self.keep_locked = keep_locked
         self.mode = mode
         self.message = message
+        self.version_id = version_id
 
     def update_progress(self, progress):
         
@@ -184,7 +188,8 @@ class FileIOThread(QtCore.QRunnable):
             send_object(self.local_file_path, message=self.message,
                         callback=self.update_progress, keep_locked=self.keep_locked)
         else:
-            get_object(self.local_file_path, callback=self.update_progress)
+            get_object(self.local_file_path, callback=self.update_progress,
+                       version_id=self.version_id)
         self.signals.end_sgn.emit(self.mode)
     
 # Unique thread object to download an entire project

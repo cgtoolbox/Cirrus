@@ -246,7 +246,7 @@ class PanelFileButtons(QtWidgets.QWidget):
 
     def lock_file(self):
 
-        self.refresh_state(True)
+        self.refresh_state()
 
         if self.is_locked == awsv_objects.FileLockState.SELF_LOCKED:
 
@@ -299,6 +299,12 @@ class PanelFileButtons(QtWidgets.QWidget):
         self.w = awsv_versions_getter.VersionPicker(self.local_file_path,
                                                     parent=self)
         self.w.exec_()
+
+        ver = self.w.version_selected
+        if not ver: return
+
+        self.panelfile.get_from_cloud(version_id=ver)
+
 
 class PanelFile(PanelFolder):
 
@@ -443,7 +449,7 @@ class PanelFile(PanelFolder):
         if self.plugin:
             self.plugin.exec_on_get(path=self.local_file_path)
 
-    def get_from_cloud(self):
+    def get_from_cloud(self, version_id=""):
 
         if not os.path.exists(self.local_file_path):
             confirm_msg = "Get file " + self.local_file_path.split('/')[-1] + " from cloud ?"
@@ -468,7 +474,8 @@ class PanelFile(PanelFolder):
 
         self.activity_progress.setVisible(True)
 
-        worker = awsv_threading.FileIOThread(self.local_file_path, mode=1)
+        worker = awsv_threading.FileIOThread(self.local_file_path, mode=1,
+                                             version_id=version_id)
        
         worker.signals.start_sgn.connect(self.start_progress)
         worker.signals.end_sgn.connect(self.end_progress)
@@ -518,15 +525,14 @@ class PanelFile(PanelFolder):
         s = os.path.getsize(self.local_file_path)
         self.activity_progress.setMaximum(s)
 
-        self.worker = awsv_io.FileIOThread(self.local_file_path, message=msg,
+        self.worker = awsv_threading.FileIOThread(self.local_file_path, message=msg,
                                            keep_locked=keep_locked)
        
-        self.worker.start_sgn.connect(self.start_progress)
-        self.worker.end_sgn.connect(self.end_progress)
-        self.worker.update_progress_sgn.connect(self.update_progress)
-
-        self.worker.start()
-        self.worker.wait()
+        self.worker.signals.start_sgn.connect(self.start_progress)
+        self.worker.signals.end_sgn.connect(self.end_progress)
+        self.worker.signals.update_progress_sgn.connect(self.update_progress)
+        
+        QtCore.QThreadPool.globalInstance().start(self.worker)
 
 class Panel(QtWidgets.QFrame):
 
