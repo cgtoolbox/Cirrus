@@ -1,7 +1,6 @@
 import sys
 import os
-import logging
-log = logging.getLogger("root")
+from AWS_Vault_core.awsv_logger import Logger
 
 from PySide2 import QtGui
 from PySide2 import QtCore
@@ -29,7 +28,7 @@ class VersionPickerThread(QtCore.QThread):
 
         self.start_sgn.emit()
         n_ver = 0
-        log.debug("Fetchin version infos for object: " + self.object_path)
+        Logger.Log.debug("Fetchin version infos for object: " + self.object_path)
 
         version = awsv_io.get_object_versions(self.object_path)
 
@@ -69,6 +68,7 @@ class VersionPicker(QtWidgets.QDialog):
     def __init__(self, object_path, parent=None):
         super(VersionPicker, self).__init__(parent=parent)
 
+        self.setWindowFlags(QtCore.Qt.Tool)
         main_layout = QtWidgets.QVBoxLayout()
         main_layout.setAlignment(QtCore.Qt.AlignTop)
         self.setObjectName("versionPicker")
@@ -100,7 +100,6 @@ class VersionPicker(QtWidgets.QDialog):
         self.n_items = 0
         self.table = QtWidgets.QTableWidget()
         self.table.setObjectName("versionTable")
-        self.table.itemClicked.connect(self.item_clicked)
         self.table.setStyleSheet("""QTableCornerButton::section {background: transparent;}""")
         self.table.setColumnCount(4)
         self.table.setHorizontalHeaderLabels(["Last Modified", "Comment", "Size", "Get"])
@@ -117,10 +116,6 @@ class VersionPicker(QtWidgets.QDialog):
         self.worker.end_sgn.connect(self.end_sgn)
         self.worker.append_version_sgn.connect(self.append_version)
         self.worker.start()
-
-    def item_clicked(self, it):
-
-        print it
 
     def end_sgn(self):
 

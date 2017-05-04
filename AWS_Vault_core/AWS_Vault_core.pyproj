@@ -31,6 +31,9 @@
     <Compile Include="awsv_io.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="awsv_logger.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="awsv_objects.py">
       <SubType>Code</SubType>
     </Compile>

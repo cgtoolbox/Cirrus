@@ -3,8 +3,7 @@ import sys
 import datetime
 import time
 import tempfile
-import logging
-log = logging.getLogger("root")
+from AWS_Vault_core.awsv_logger import Logger
 
 from PySide2 import QtGui
 from PySide2 import QtWidgets
@@ -202,10 +201,19 @@ class PanelFileButtons(QtWidgets.QWidget):
 
         if state == awsv_objects.FileState.CLOUD_ONLY:
             self.is_on_cloud_button.setIcon(QtGui.QIcon(ICONS + "cloud_only.png"))
+            self.is_on_cloud_button.setToolTip("File saved on cloud only\nClick to download the latest version.")
+
         elif state == awsv_objects.FileState.LOCAL_ONLY:
             self.is_on_cloud_button.setIcon(QtGui.QIcon(ICONS + "cloud_close.png"))
+            self.is_on_cloud_button.setToolTip("File saved only locally\nClick on save button to save it on the cloud.")
+
+        elif state == awsv_objects.FileState.CLOUD_AND_LOCAL_NOT_LATEST:
+            self.is_on_cloud_button.setIcon(QtGui.QIcon(ICONS + "cloud_checkmark_not_latest.png"))
+            self.is_on_cloud_button.setToolTip("Local version of the file is not the latest\nClick to download the latest version.")
+
         else:
             self.is_on_cloud_button.setIcon(QtGui.QIcon(ICONS + "cloud_checkmark.png"))
+            self.is_on_cloud_button.setToolTip("File is up to date locally and on the cloud.")
 
         self.save_to_cloud_button.setVisible(True)
         self.is_on_cloud_button.setVisible(True)

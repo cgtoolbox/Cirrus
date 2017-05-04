@@ -9,7 +9,7 @@ import datetime
 import time
 from stat import S_IREAD, S_IRGRP, S_IROTH, S_IWRITE
 import logging
-log = logging.getLogger("root")
+from AWS_Vault_core.awsv_logger import Logger
 
 from PySide2 import QtCore
 
@@ -31,7 +31,7 @@ def get_bucket(bucket_name=""):
         return resource.Bucket(bucket_name)
 
     except botocore.exceptions.ClientError as e:
-        log.error(str(e))
+        Logger.Log.error(str(e))
         return None
 
 def get_object_versions(object_path=""):
@@ -45,7 +45,7 @@ def get_object_versions(object_path=""):
     try:
         return Bucket.object_versions.filter(Prefix=object_key)
     except botocore.exceptions.ClientError as e:
-        log.warning(str(e))
+        Logger.Log.warning(str(e))
         return []
 
 def lock_object(object_path="", toggle=True, lock_message=""):
@@ -61,7 +61,7 @@ def lock_object(object_path="", toggle=True, lock_message=""):
     local_root = ConnectionInfos.get("local_root")
     object_key = object_path.replace(local_root, '')
 
-    log.debug("Lock file: " + object_path + " (" + str(toggle) + ')')
+    Logger.Log.debug("Lock file: " + object_path + " (" + str(toggle) + ')')
 
     now = datetime.datetime.now()
 
@@ -89,7 +89,7 @@ def lock_object(object_path="", toggle=True, lock_message=""):
 
     return metadata
 
-def get_metadata(object_path=""):
+def get_metadata(object_path="", force_cloud=False):
     """ Get the given object_path metadata on S3 vault, return None
         if not found.
     """
@@ -104,11 +104,14 @@ def get_metadata(object_path=""):
     metadata_file = object_key.split('.', 1)[0] + awsv_objects.METADATA_IDENTIFIER
     metadata_path = os.path.dirname(object_path) + '/' + metadata_file.split('/')[-1]
     
-    log.debug("Access metadata file: " + metadata_path)
+    Logger.Log.debug("Access metadata file: " + metadata_path)
 
     try:
-        obj = Bucket.Object(metadata_file)
-        obj.download_file(metadata_path)
+        # if the local metadata doesn't exist, then download it from cloud
+        # unless force_cloud is True
+        if not os.path.exists(metadata_path) or force_cloud:
+            obj = Bucket.Object(metadata_file)
+            obj.download_file(metadata_path)
 
         with open(metadata_path) as f:
             data = json.load(f)
@@ -202,7 +205,7 @@ def get_object(object_path="", version_id="", callback=None):
     local_root = ConnectionInfos.get("local_root")
     object_key = object_path.replace(local_root, '')
 
-    log.info("Downloading file: " + object_path + " version_id: " + version_id)
+    Logger.Log.info("Downloading file: " + object_path + " version_id: " + version_id)
 
     extra_args = None
     if version_id:
@@ -221,10 +224,16 @@ def get_object(object_path="", version_id="", callback=None):
     if os.path.exists(temp_file):
         os.remove(temp_file)
 
-    metadata = get_metadata(object_path)
+    metadata = get_metadata(object_path, force_cloud=True)
+
+    # fetch latest version id
+    ver_id = get_cloud_version_id(object_path)
+    
     if not metadata:
+        metadata = {"version_id":ver_id}
         generate_metadata(object_key)
     else:
+        metadata["version_id"] = ver_id
         p, f = os.path.split(object_path)
         p = p.replace('\\', '/')
         f = f.split('.')[0] + awsv_objects.METADATA_IDENTIFIER
@@ -278,9 +287,6 @@ def is_local_file_latest(object_path):
     """
     local_ver = get_local_version_id(object_path)
     cloud_ver = get_cloud_version_id(object_path)
-
-    print("local_ver " + str(local_ver))
-    print("cloud_ver " + str(cloud_ver))
 
     if local_ver is None and cloud_ver is None:
         return True
@@ -347,10 +353,10 @@ def checkout_file(toggle, object_path="", message=""):
 def get_local_folder_element(folder):
 
     if not os.path.exists(folder):
-        log.error("Folder {} doesn't exists".format(folder))
+        Logger.Log.error("Folder {} doesn't exists".format(folder))
         return None
 
-    log.debug("Get local folder elements " + folder)
+    Logger.Log.debug("Get local folder elements " + folder)
 
     elements = os.listdir(folder)
     local_root = ConnectionInfos.get("local_root")
@@ -396,7 +402,7 @@ def get_bucket_folder_elements(folder_name=""):
     """
     Bucket = ConnectionInfos.get("bucket")
 
-    log.debug("Get cloud folder element " + folder_name)
+    Logger.Log.debug("Get cloud folder element " + folder_name)
 
     if folder_name != "":
         if not folder_name.endswith('/'): folder_name += '/'
@@ -452,5 +458,5 @@ def check_object(object_path="", version_id=None):
             return client.head_object(Bucket=bucket_name, Key=object_key, VersionId=version_id)
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == "404":
-            return False
+            return None
         raise e

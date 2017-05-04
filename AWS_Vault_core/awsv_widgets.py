@@ -3,9 +3,7 @@ import sys
 import datetime
 import time
 import tempfile
-import logging
-
-log = logging.getLogger("root")
+from AWS_Vault_core.awsv_logger import Logger
 
 from PySide2 import QtGui
 from PySide2 import QtWidgets
@@ -277,8 +275,8 @@ class ProjectGetter(QtWidgets.QMainWindow):
         if not os.path.exists(prj_path):
             os.makedirs(prj_path)
 
-        log.info("Downloading project: " + bucket_name)
-        log.info("Local path: " + prj_path)
+        Logger.Log.info("Downloading project: " + bucket_name)
+        Logger.Log.info("Local path: " + prj_path)
 
         self.prj_path = prj_path
         self.worker = awsv_threading.DownloadProjectThread(bucket, prj_path)
@@ -408,7 +406,7 @@ class MainWidget(QtWidgets.QFrame):
 
         root = root.replace('\\', '/')
         bucket_name = root.split('/')[-1]
-        log.info("Init root: " + root)
+        Logger.Log.info("Init root: " + root)
 
         # init the connection informations singleton
         init_connection(bucket_name=bucket_name, local_root=root, reset=True)

@@ -43,7 +43,7 @@ class ElementFetcherThread(QtCore.QRunnable):
                 if not self.folder_name.endswith('/'): self.folder_name += '/'
             s3_client = ConnectionInfos.get("s3_client")
 
-            log.debug("Get cloud folder elements " + self.folder_name)
+            Logger.Log.debug("Get cloud folder elements " + self.folder_name)
 
             if self.cancel: return
 
@@ -70,12 +70,12 @@ class ElementFetcherThread(QtCore.QRunnable):
                     self.signals.add_element.emit(f)
                     elements_sent.append(f)
         else:
-            log.warning("Bucket is None, can't get cloud elements")
+            Logger.Log.warning("Bucket is None, can't get cloud elements")
 
         # Get local folders and elements
         folder = local_root + self.folder_name
 
-        log.debug("Get local folder elements " + folder)
+        Logger.Log.debug("Get local folder elements " + folder)
 
         elements = os.listdir(folder)
         local_root = ConnectionInfos.get("local_root")
@@ -137,15 +137,17 @@ class FetchStateThread(QtCore.QRunnable):
         if not metadata:
             metadata = {}
 
-        is_latest = is_local_file_latest(self.local_file_path)
-        print is_latest
-
         if is_on_cloud:
 
             if not os.path.exists(self.local_file_path):
                 self.signals.end_sgn.emit(awsv_objects.FileState.CLOUD_ONLY, metadata)
                 return
             
+            is_latest = is_local_file_latest(self.local_file_path)
+            if not is_latest:
+                self.signals.end_sgn.emit(awsv_objects.FileState.CLOUD_AND_LOCAL_NOT_LATEST, metadata)
+                return
+
             self.signals.end_sgn.emit(awsv_objects.FileState.CLOUD_AND_LOCAL_LATEST, metadata)
 
         else:
@@ -217,10 +219,10 @@ class DownloadProjectThread(QtCore.QThread):
 
         self.start_sgn.emit()
         try:
-            log.info("Fetching all bucket's objects")
+            Logger.Log.info("Fetching all bucket's objects")
             all_objects = self.bucket.objects.all()
         except Exception as e:
-            log.error(str(e))
+            Logger.Log.error(str(e))
             self.end_sgn.emit(-1, 0, str(e))
             return
 
@@ -230,7 +232,7 @@ class DownloadProjectThread(QtCore.QThread):
         for obj in all_objects:
             
             if self.cancel:
-                log.info("Cancelling project download ...")
+                Logger.Log.info("Cancelling project download ...")
                 self.end_sgn.emit(0, n_elements, "", global_size)
                 return
 
@@ -249,10 +251,10 @@ class DownloadProjectThread(QtCore.QThread):
             self.start_element_download_sgn.emit(key, obj.size)
 
             try:
-                log.debug("Downloading file: " + path)
+                Logger.Log.debug("Downloading file: " + path)
                 _object.download_file(path, Callback=self.update_progress)
             except Exception as e:
-                log.error(str(e))
+                Logger.Log.error(str(e))
                 self.end_sgn.emit(-1, 0, str(e), 0)
                 return
 
@@ -264,4 +266,4 @@ class DownloadProjectThread(QtCore.QThread):
         time_elapsed = str(end_time - start_time)
 
         self.end_sgn.emit(1, n_elements, time_elapsed, global_size)
-        log.info("Project files downloaded !")
+        Logger.Log.info("Project files downloaded !")

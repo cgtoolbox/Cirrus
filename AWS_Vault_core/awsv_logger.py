@@ -1,19 +1,11 @@
 import os
 import sys
 import logging
-import getpass
-import socket
 from logging.handlers import RotatingFileHandler
-from PySide2 import QtGui
-
-from AWS_Vault_core import awsv_widgets
-reload(awsv_widgets)
 from AWS_Vault_core import awsv_config
 
-from AWS_Vault_core.awsv_logger import Logger
-
 def init_logger():
-
+    
     debug_level = awsv_config.Config.get("Log", "DebugLevel", str).upper()
     if debug_level == "INFO":
         debug_level = logging.INFO
@@ -47,22 +39,23 @@ def init_logger():
     app_log = logging.getLogger('root')
     app_log.setLevel(debug_level)
     app_log.addHandler(handler)
-
-def get_main_widget():
     
-    Logger.Log.info("=== New session ===")
-    Logger.Log.info("user uid: " + getpass.getuser() + '@' + socket.gethostname())
-    Logger.Log.info("Executable: " + sys.executable)
-    return awsv_widgets.MainWidget()
+    return app_log
 
-def launch_standalone(args):
-    
-    app = QtGui.QGuiApplication(sys.argv)
-    w = awsv_widgets.MainWidget()
-    w.show()
-    app.exec_()
+class Logger():
 
+    Log = init_logger()
 
-if __name__ == "__main__":
-    
-    launch_standalone()
+    @classmethod
+    def delete_log(cls):
+        log_filepath = awsv_config.Config.get("Log", "LogFilePath", str)
+        if log_filepath == "default":
+            logFile = os.environ["HOME"] + os.sep + 'awsv.log'
+        else:
+            logFile = log_filepath
+
+        try:
+            os.remove(logFile)
+        except IOError:
+            pass
+            

@@ -3,7 +3,7 @@ import boto3
 import botocore
 import datetime
 import logging
-log = logging.getLogger("root")
+from AWS_Vault_core.awsv_logger import Logger
 
 from AWS_Vault_core import awsv_config
 
@@ -38,7 +38,7 @@ class ConnectionInfos(_singleton):
 
 def init_connection(bucket_name="", local_root="", reset=False):
     
-    log.info("Init connection, bucket_name={}, local_root={}".format(bucket_name, local_root))
+    Logger.Log.info("Init connection, bucket_name={}, local_root={}".format(bucket_name, local_root))
     
     region_name = awsv_config.Config.get("BucketSettings", "DefaultRegionName", str)
 
@@ -60,7 +60,7 @@ def init_connection(bucket_name="", local_root="", reset=False):
             bucket = s3_resource.Bucket(bucket_name)
 
         except botocore.exceptions.ClientError as e:
-            log.error(str(e))
+            Logger.Log.error(str(e))
             bucket = None
 
         local_root = local_root.replace('\\', '/')

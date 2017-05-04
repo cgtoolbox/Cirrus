@@ -1,8 +1,6 @@
 import ConfigParser
 import os
 import sys
-import logging
-log = logging.getLogger("root")
 
 """
     Configuration options singleton.
@@ -17,8 +15,6 @@ def generate_config_file():
     if os.path.exists(cfgfile_path):
         config.read(cfgfile_path)
         return config
-
-    log.info("Config file not found, creating a new one.")
 
     config.add_section("Main")
     config.set('Main', 'AutoCheckFilesState', True)

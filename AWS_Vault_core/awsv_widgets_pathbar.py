@@ -3,8 +3,7 @@ import sys
 import datetime
 import time
 import tempfile
-import logging
-log = logging.getLogger("root")
+from AWS_Vault_core.awsv_logger import Logger
 
 from PySide2 import QtGui
 from PySide2 import QtWidgets

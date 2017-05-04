@@ -3,7 +3,7 @@ import os
 import sys
 import imp
 import logging
-log = logging.getLogger("root")
+from AWS_Vault_core.awsv_logger import Logger
 
 from PySide2 import QtWidgets
 
@@ -50,7 +50,7 @@ class Plugin(object):
         if m:
             return m(path=kwargs["path"])
 
-        log.warn("Plugin failed, module {} doesn't have method {}".format(self._module, self._on_get))
+        Logger.Log.warn("Plugin failed, module {} doesn't have method {}".format(self._module, self._on_get))
         return None
 
     def exec_on_save(self, *args, **kwargs):
@@ -62,7 +62,7 @@ class Plugin(object):
         if m:
             return m(args, kwargs)
 
-        log.warn("Plugin failed, module {} doesn't have method {}".format(self._module, self._on_save))
+        Logger.Log.warn("Plugin failed, module {} doesn't have method {}".format(self._module, self._on_save))
         return None
 
     def exec_on_lock(self, *args, **kwargs):
@@ -74,7 +74,7 @@ class Plugin(object):
         if m:
             return m(args, kwargs)
 
-        log.warn("Plugin failed, module {} doesn't have method {}".format(self._module, self._on_lock))
+        Logger.Log.warn("Plugin failed, module {} doesn't have method {}".format(self._module, self._on_lock))
         return None
 
     def on_icon_clicked_menu(self, parent, **kwargs):
@@ -87,7 +87,7 @@ class Plugin(object):
         for k, v in self._on_icon_clicked.iteritems():
             m = getattr(self._module, k, None)
             if not m:
-                log.warn("Plugin failed, module {} doesn't have method {}".format(self._module, k))
+                Logger.Log.warn("Plugin failed, module {} doesn't have method {}".format(self._module, k))
                 continue
             act = QtWidgets.QAction(v, parent)
             act.triggered.connect(lambda v=m: v(path=kwargs["path"],
@@ -109,14 +109,14 @@ def parse_plugin():
     root, f = os.path.split(EXE)
     software_key = f.split('.', 1)[0]
 
-    log.info("Parsing plugins, software key: " + software_key)
+    Logger.Log.info("Parsing plugins, software key: " + software_key)
 
     with open(plugin_settings) as data:
         plugin_data = json.load(data)
     
     plugins = plugin_data.get("plugins")
     if not plugins:
-        log.warning("plugin_settings.json not valid, 'plugins' key not found")
+        Logger.Log.warning("plugin_settings.json not valid, 'plugins' key not found")
         return
 
     valid_plugin = None
@@ -129,12 +129,12 @@ def parse_plugin():
             break
 
     if not valid_plugin:
-        log.warning("No valid plugin found for given software_key")
+        Logger.Log.warning("No valid plugin found for given software_key")
         return
 
     script_path = plugins_scripts + os.sep + valid_plugin["script"]
     if not os.path.exists(script_path):
-        log.warning("Plugin script path not valid: " + script_path)
+        Logger.Log.warning("Plugin script path not valid: " + script_path)
         return
 
     valid_plugins = []
@@ -142,7 +142,7 @@ def parse_plugin():
     for i, binding in enumerate(valid_plugin["binding"]):
 
         if not binding["files"]:
-            log.warning("Plugin {} invalid 'files'.".format(i))
+            Logger.Log.warning("Plugin {} invalid 'files'.".format(i))
             continue
 
         p = Plugin()
@@ -162,7 +162,7 @@ def parse_plugin():
     if not valid_plugins:
         return
 
-    log.info(str(len(valid_plugins)) + " Plugin(s) loaded")
+    Logger.Log.info(str(len(valid_plugins)) + " Plugin(s) loaded")
 
     PluginRepository.PLUGINS = valid_plugins
     PluginRepository.VALID_FILES = valid_files

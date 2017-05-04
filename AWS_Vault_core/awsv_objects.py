@@ -7,7 +7,7 @@ import socket
 import time
 import os
 import logging
-log = logging.getLogger("root")
+from AWS_Vault_core.awsv_logger import Logger
 
 from PySide2 import QtCore
 
