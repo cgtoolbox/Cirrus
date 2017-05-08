@@ -23,6 +23,7 @@ class VersionPickerThread(QtCore.QThread):
         super(VersionPickerThread, self).__init__()
 
         self.object_path = object_path
+        self.cancel = False
 
     def run(self):
 
@@ -34,6 +35,9 @@ class VersionPickerThread(QtCore.QThread):
 
         for v in version:
 
+            if self.cancel:
+                self.end_sgn.emit(n_ver)
+
             latest = v.last_modified
             _size = v.size
             is_latest = v.is_latest
@@ -43,6 +47,8 @@ class VersionPickerThread(QtCore.QThread):
             user = "None"
             delete_marker = False
             try:
+                if self.cancel:
+                    self.end_sgn.emit(n_ver)
                 head = v.head()
             except botocore.exceptions.ClientError as e:
                 head = None
@@ -50,11 +56,13 @@ class VersionPickerThread(QtCore.QThread):
             if head:
                 delete_marker = head.get("DeleteMarker", False)
 
+                if self.cancel:
+                    self.end_sgn.emit(n_ver)
+
                 meta = head.get("Metadata")
                 if meta:
                     message = meta.get("upload_message", "None")
                     user = meta.get("submit_user", "None")
-
 
             self.append_version_sgn.emit(latest, _size, is_latest, v_id,
                                          delete_marker, message, user)
@@ -106,7 +114,7 @@ class VersionPicker(QtWidgets.QDialog):
         main_layout.addWidget(self.table)
 
         close_btn = QtWidgets.QPushButton("Close")
-        close_btn.clicked.connect(self.close)
+        close_btn.clicked.connect(self.close_and_cancel)
         main_layout.addWidget(close_btn)
 
         self.setLayout(main_layout)
@@ -116,6 +124,11 @@ class VersionPicker(QtWidgets.QDialog):
         self.worker.end_sgn.connect(self.end_sgn)
         self.worker.append_version_sgn.connect(self.append_version)
         self.worker.start()
+
+    def close_and_cancel(self):
+
+        self.worker.cancel = True
+        self.close()
 
     def end_sgn(self):
 
@@ -133,6 +146,7 @@ class VersionPicker(QtWidgets.QDialog):
 
     def download_version(self, version_id):
         
+        self.worker.cancel = True
         self.version_selected = version_id
         self.close()
 

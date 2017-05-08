@@ -41,8 +41,9 @@ class ObjectState(object):
 
 class ObjectMetadata(object):
 
-    __slots__ = ["user", "creation_time", "latest_upload", "latest_upload_user", "version_id",
+    __slots__ = ["user", "creation_time", "latest_upload", "latest_upload_user", "is_latest",
                  "lock_message", "lock_time", "upload_message", "references", "extra_infos",
+                 "version_id",
                  "__root", "__object_key"]
 
     def __init__(self, object_key=""):
@@ -58,6 +59,7 @@ class ObjectMetadata(object):
         self.upload_message = ""
         self.latest_upload = ""
         self.version_id = ""
+        self.is_latest = False
         self.references = []
         self.extra_infos = None
 
@@ -75,6 +77,7 @@ class ObjectMetadata(object):
         self.extra_infos = metadata.get("extra_infos")
         self.lock_time = metadata.get("lock_time", "")
         self.version_id = metadata.get("version_id", "")
+        self.is_latest = metadata.get(is_latest, False)
 
         lm = metadata.get("lock_message")
         if lm is not None and lm != "None":

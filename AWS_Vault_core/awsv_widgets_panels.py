@@ -60,6 +60,49 @@ class ActivityWidget(QtWidgets.QWidget):
     def start(self):
         self.movie.start()
 
+class GetFileFromCloudButton(QtWidgets.QPushButton):
+
+    def __init__(self, panelfile, state, parent=None):
+        super(GetFileFromCloudButton, self).__init__("")
+        self.setStyleSheet("""QPushButton{background-color: transparent;border: 0px}
+                              QPushButton:hover{background-color: #607e9c;border: 0px}""")
+
+        self.panelfile = panelfile
+        self.state = state
+        self.parent_w = parent
+
+        self.refresh_state(state)
+
+    def mousePressEvent(self, event):
+
+        if self.panelfile.state == awsv_objects.FileState.LOCAL_ONLY:
+            return
+
+        if event.button() == QtCore.Qt.RightButton:
+            self.parent_w.open_versions()
+        else:
+            self.panelfile.get_from_cloud()
+
+    def refresh_state(self, state):
+
+        self.state = state
+
+        if state == awsv_objects.FileState.CLOUD_ONLY:
+            self.setIcon(QtGui.QIcon(ICONS + "cloud_only.png"))
+            self.setToolTip("File saved on cloud only\nClick to download the latest version.")
+
+        elif state == awsv_objects.FileState.LOCAL_ONLY:
+            self.setIcon(QtGui.QIcon(ICONS + "cloud_close.png"))
+            self.setToolTip("File saved only locally\nClick on save button to save it on the cloud.")
+
+        elif state == awsv_objects.FileState.CLOUD_AND_LOCAL_NOT_LATEST:
+            self.setIcon(QtGui.QIcon(ICONS + "cloud_checkmark_not_latest.png"))
+            self.setToolTip("Local version of the file is not the latest\nClick to download the latest version.\nRight-click to get older versions.")
+
+        else:
+            self.setIcon(QtGui.QIcon(ICONS + "cloud_checkmark.png"))
+            self.setToolTip("File is up to date locally and on the cloud.\nRight-click to get older versions.")
+
 class PanelFolder(QtWidgets.QFrame):
 
     def __init__(self, name="", path="", parent=None):
@@ -131,14 +174,10 @@ class PanelFileButtons(QtWidgets.QWidget):
         self.save_to_cloud_button.clicked.connect(self.panelfile.save_to_cloud)
         self.buttons_layout.addWidget(self.save_to_cloud_button)
 
-        self.is_on_cloud_button = QtWidgets.QPushButton("")
-        self.is_on_cloud_button.setStyleSheet("""QPushButton{background-color: transparent;border: 0px}
-                                             QPushButton:hover{background-color: #607e9c;border: 0px}""")
-        if self.panelfile.state == awsv_objects.FileState.LOCAL_ONLY:
-            self.is_on_cloud_button.setIcon(QtGui.QIcon(ICONS + "cloud_close.png"))
-        else:
-            self.is_on_cloud_button.setIcon(QtGui.QIcon(ICONS + "cloud_checkmark.png"))
-            self.is_on_cloud_button.clicked.connect(self.panelfile.get_from_cloud)
+        self.is_on_cloud_button = GetFileFromCloudButton(self.panelfile,
+                                                         self.panelfile.state,
+                                                         parent=self)
+        self.is_on_cloud_button.panelfile = self.panelfile
         self.is_on_cloud_button.setIconSize(QtCore.QSize(26, 26))
         self.is_on_cloud_button.setFixedSize(QtCore.QSize(28, 28))
         self.buttons_layout.addWidget(self.is_on_cloud_button)
@@ -199,21 +238,7 @@ class PanelFileButtons(QtWidgets.QWidget):
         self.activity.stop()
         self.activity.setVisible(False)
 
-        if state == awsv_objects.FileState.CLOUD_ONLY:
-            self.is_on_cloud_button.setIcon(QtGui.QIcon(ICONS + "cloud_only.png"))
-            self.is_on_cloud_button.setToolTip("File saved on cloud only\nClick to download the latest version.")
-
-        elif state == awsv_objects.FileState.LOCAL_ONLY:
-            self.is_on_cloud_button.setIcon(QtGui.QIcon(ICONS + "cloud_close.png"))
-            self.is_on_cloud_button.setToolTip("File saved only locally\nClick on save button to save it on the cloud.")
-
-        elif state == awsv_objects.FileState.CLOUD_AND_LOCAL_NOT_LATEST:
-            self.is_on_cloud_button.setIcon(QtGui.QIcon(ICONS + "cloud_checkmark_not_latest.png"))
-            self.is_on_cloud_button.setToolTip("Local version of the file is not the latest\nClick to download the latest version.")
-
-        else:
-            self.is_on_cloud_button.setIcon(QtGui.QIcon(ICONS + "cloud_checkmark.png"))
-            self.is_on_cloud_button.setToolTip("File is up to date locally and on the cloud.")
+        self.is_on_cloud_button.refresh_state(state)
 
         self.save_to_cloud_button.setVisible(True)
         self.is_on_cloud_button.setVisible(True)
@@ -255,6 +280,11 @@ class PanelFileButtons(QtWidgets.QWidget):
     def lock_file(self):
 
         self.refresh_state()
+
+        # if not on cloud, you can't lock the file
+        if self.panelfile.state == awsv_objects.FileState.LOCAL_ONLY:
+            QtWidgets.QMessageBox.warning(self, "Error", "You can't lock a file saved only locally")
+            return
 
         if self.is_locked == awsv_objects.FileLockState.SELF_LOCKED:
 
@@ -452,6 +482,8 @@ class PanelFile(PanelFolder):
 
         ico = QtGui.QIcon(ICONS + "cloud_checkmark.png")
         self.file_buttons.is_on_cloud_button.setIcon(ico)
+
+        self.file_buttons.refresh_state()
 
         # check if a plugin is loaded, if yes, execute the "on_get" method of the plugin
         if self.plugin:

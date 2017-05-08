@@ -7,6 +7,7 @@ import tempfile
 import shutil
 import datetime
 import time
+from io import BytesIO
 from stat import S_IREAD, S_IRGRP, S_IROTH, S_IWRITE
 import logging
 from AWS_Vault_core.awsv_logger import Logger
@@ -151,9 +152,6 @@ def send_object(object_path="", message="", callback=None, keep_locked=False):
     local_root = ConnectionInfos.get("local_root")
     object_key = object_path.replace(local_root, '')
 
-    # lock the file before sending it to cloud
-    os.chmod(object_path, S_IREAD|S_IRGRP|S_IROTH)
-
     user_uid = awsv_objects.ObjectMetadata.get_user_uid()
     if keep_locked:
         user = user_uid
@@ -163,15 +161,16 @@ def send_object(object_path="", message="", callback=None, keep_locked=False):
         lock_message = ""
 
     now = datetime.datetime.now()
-    metadata = {"upload_message":message,
-                "latest_upload":now.ctime(),
-                "lock_message":lock_message,
+    metadata = {"upload_message":message.decode("ascii", "ignore"),
+                "latest_upload":now.ctime().replace(' ', '_').replace(':', '_'),
+                "lock_message":lock_message.decode("ascii", "ignore"),
                 "user":user,
                 "latest_upload_user":user_uid}
 
-    Bucket.upload_file(object_path, object_key,
-                       ExtraArgs={"Metadata":metadata},
-                       Callback=callback)
+    with open(object_path, "rb") as obj:
+        Bucket.upload_fileobj(obj, Key=object_key,
+                              ExtraArgs={"Metadata":metadata},
+                              Callback=callback)
 
     metadata["version_id"] = get_cloud_version_id(object_path)
 
@@ -227,13 +226,14 @@ def get_object(object_path="", version_id="", callback=None):
     metadata = get_metadata(object_path, force_cloud=True)
 
     # fetch latest version id
-    ver_id = get_cloud_version_id(object_path)
+    if version_id == "":
+        version_id = get_cloud_version_id(object_path)
     
     if not metadata:
-        metadata = {"version_id":ver_id}
+        metadata = {"version_id":version_id}
         generate_metadata(object_key)
     else:
-        metadata["version_id"] = ver_id
+        metadata["version_id"] = version_id
         p, f = os.path.split(object_path)
         p = p.replace('\\', '/')
         f = f.split('.')[0] + awsv_objects.METADATA_IDENTIFIER
@@ -297,7 +297,7 @@ def is_local_file_latest(object_path):
     if cloud_ver is None and not local_ver is None:
         return True
 
-    return cloud_ver == cloud_ver
+    return local_ver == cloud_ver
 
 def checkout_file(toggle, object_path="", message=""):
     """ Checkout the given object on aws s3 server, that means it sets
