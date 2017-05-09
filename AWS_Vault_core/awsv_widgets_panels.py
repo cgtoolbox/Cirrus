@@ -35,6 +35,81 @@ if exe in ["hindie", "houdinicore", "hescape", "houdinifx"]:
 else:
     IS_HOUDINI = False
 
+class MetadataViewer(QtWidgets.QDialog):
+
+    def __init__(self, object_path, parent=None):
+        super(MetadataViewer, self).__init__(parent=parent)
+
+        root, f = os.path.split(object_path)
+
+        self.setWindowFlags(QtCore.Qt.Tool)
+        self.setWindowTitle("Metadata viewer: " + f)
+
+        metadata = awsv_io.get_metadata(object_path)
+
+        main_layout = QtWidgets.QVBoxLayout()
+
+        data = []
+        data.append(["Object path:", object_path])
+        data.append(["Object Key:", awsv_io.get_object_key(object_path)])
+
+        if os.path.exists(object_path):
+            size = os.path.getsize(object_path) * 0.000001
+        else:
+            size = 0.0
+        s = '{0:.3f} Mb'.format(size)
+        data.append(["Object local file size:", s])
+
+        data.append(["Is on cloud:", str(awsv_io.check_object(object_path) is not None)])
+        data.append(["Is local:", str(os.path.exists(object_path))])
+
+        if metadata:
+            data.append(["Latest Upload User:", metadata.get("latest_upload_user", "-")])
+            data.append(["Latest update:", metadata.get("latest_upload", "-")])
+            data.append(["Upload message:", metadata.get("upload_message", "-")])
+            data.append(["Extra Infos:", metadata.get("extra_infos", "-")])
+            data.append(["Latest Upload User:", metadata.get("latest_upload_user", "-")])
+            data.append(["User:", metadata.get("user", "-")])
+            data.append(["Lock Message:", metadata.get("lock_message", "-")])
+            data.append(["Lock Time:", metadata.get("lock_time", "-")])
+            data.append(["Is Latest:", metadata.get("is_latest", "-")])
+
+            refs = metadata.get("references")
+            if refs:
+                for i, ref in enumerate(refs):
+                    data.append(["ref" + str(i) + ":", str(ref)])
+
+            else:
+                data.append(["References:", "None"])
+        else:
+            data.append(["No Metadata found locally", ""])
+
+        for d, v in data:
+
+            obj_lay = QtWidgets.QHBoxLayout()
+            obj_lay.setAlignment(QtCore.Qt.AlignLeft)
+
+            bold = QtGui.QFont()
+            bold.setBold(True)
+            ld = QtWidgets.QLabel(str(d))
+            ld.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
+            ld.setStyleSheet("background-color: transparent;color: #436fdf")
+            ld.setFont(bold)
+            obj_lay.addWidget(ld)
+
+            lv = QtWidgets.QLabel(str(v))
+            lv.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
+            lv.setStyleSheet("background-color: transparent")
+            obj_lay.addWidget(lv)
+
+            main_layout.addLayout(obj_lay)
+
+        close_btn = QtWidgets.QPushButton("Close")
+        close_btn.clicked.connect(self.close)
+        main_layout.addWidget(close_btn)
+
+        self.setLayout(main_layout)
+
 class ActivityWidget(QtWidgets.QWidget):
 
     def __init__(self, *args):
@@ -75,7 +150,7 @@ class GetFileFromCloudButton(QtWidgets.QPushButton):
 
     def mousePressEvent(self, event):
 
-        if self.panelfile.state == awsv_objects.FileState.LOCAL_ONLY:
+        if self.state == awsv_objects.FileState.LOCAL_ONLY:
             return
 
         if event.button() == QtCore.Qt.RightButton:
@@ -90,6 +165,10 @@ class GetFileFromCloudButton(QtWidgets.QPushButton):
         if state == awsv_objects.FileState.CLOUD_ONLY:
             self.setIcon(QtGui.QIcon(ICONS + "cloud_only.png"))
             self.setToolTip("File saved on cloud only\nClick to download the latest version.")
+
+        elif state == awsv_objects.FileState.METADATA_DESYNC:
+            self.setIcon(QtGui.QIcon(ICONS + "cloud_meta_desync.png"))
+            self.setToolTip("Warning: metadata desyncronized or missing\nDownload the latest version of the file to refresh the metadata.")
 
         elif state == awsv_objects.FileState.LOCAL_ONLY:
             self.setIcon(QtGui.QIcon(ICONS + "cloud_close.png"))
@@ -148,10 +227,12 @@ class PanelFolder(QtWidgets.QFrame):
 
 class PanelFileButtons(QtWidgets.QWidget):
 
-    def __init__(self, parent):
+    def __init__(self, parent, state=awsv_objects.FileState.NONE):
         super(PanelFileButtons, self).__init__(parent=parent)
 
         self.panelfile = parent
+        self.metadata = None
+        self.state = state
         self.local_file_path = self.panelfile.local_file_path
         self.is_locked = awsv_objects.FileLockState.UNLOCKED
 
@@ -175,7 +256,7 @@ class PanelFileButtons(QtWidgets.QWidget):
         self.buttons_layout.addWidget(self.save_to_cloud_button)
 
         self.is_on_cloud_button = GetFileFromCloudButton(self.panelfile,
-                                                         self.panelfile.state,
+                                                         self.state,
                                                          parent=self)
         self.is_on_cloud_button.panelfile = self.panelfile
         self.is_on_cloud_button.setIconSize(QtCore.QSize(26, 26))
@@ -197,7 +278,7 @@ class PanelFileButtons(QtWidgets.QWidget):
         self.infos_button.setIcon(QtGui.QIcon(ICONS + "info.svg"))
         self.infos_button.setIconSize(QtCore.QSize(26, 26))
         self.infos_button.setFixedSize(QtCore.QSize(28, 28))
-        self.infos_button.clicked.connect(self.open_versions)
+        self.infos_button.clicked.connect(self.open_infos)
         self.buttons_layout.addWidget(self.infos_button)
 
         self.refresh_button = QtWidgets.QPushButton("")
@@ -240,6 +321,9 @@ class PanelFileButtons(QtWidgets.QWidget):
 
         self.is_on_cloud_button.refresh_state(state)
 
+        self.metadata = metadata
+        self.state = state
+        
         self.save_to_cloud_button.setVisible(True)
         self.is_on_cloud_button.setVisible(True)
         self.lock_button.setVisible(True)
@@ -279,11 +363,27 @@ class PanelFileButtons(QtWidgets.QWidget):
 
     def lock_file(self):
 
-        self.refresh_state()
+        Logger.Log.debug("Refresh state before locking file")
+        state, metadata = awsv_io.refresh_state(self.local_file_path)
+        self.end_state_refreshing(state, metadata)
 
         # if not on cloud, you can't lock the file
-        if self.panelfile.state == awsv_objects.FileState.LOCAL_ONLY:
-            QtWidgets.QMessageBox.warning(self, "Error", "You can't lock a file saved only locally")
+        if self.state == awsv_objects.FileState.LOCAL_ONLY:
+            Logger.Log.debug("Trying to lock a local-only file: " + self.local_file_path)
+            QtWidgets.QMessageBox.warning(self, "Error",
+                                          ("Trying to lock a local-only file,\n"
+                                           "Send the object on the cloud first."))
+            return
+
+        if self.state == awsv_objects.FileState.CLOUD_ONLY:
+            Logger.Log.debug("Trying to lock a cloud-only file: " + self.local_file_path)
+            QtWidgets.QMessageBox.warning(self, "Error",
+                                          ("Trying to lock a cloud-only file,\n"
+                                           "Get the latest version from the cloud first."))
+            return
+
+        if self.is_locked == awsv_objects.FileLockState.LOCKED:
+            QtWidgets.QMessageBox.warning(self, "Error", "File already locked")
             return
 
         if self.is_locked == awsv_objects.FileLockState.SELF_LOCKED:
@@ -343,6 +443,9 @@ class PanelFileButtons(QtWidgets.QWidget):
 
         self.panelfile.get_from_cloud(version_id=ver)
 
+    def open_infos(self):
+
+        MetadataViewer(self.local_file_path, self).exec_()
 
 class PanelFile(PanelFolder):
 
@@ -411,7 +514,7 @@ class PanelFile(PanelFolder):
         self.buttons_layout.addStretch(1)
         self.buttons_layout.setAlignment(QtCore.Qt.AlignRight)
 
-        self.file_buttons = PanelFileButtons(self)
+        self.file_buttons = PanelFileButtons(self, state=self.state)
         self.buttons_layout.addWidget(self.file_buttons)
 
         self.main_layout.addLayout(self.buttons_layout)
@@ -678,7 +781,6 @@ class Panel(QtWidgets.QFrame):
         w = PanelFile(name=file_name, path=f, parent=self)
         self.elements.append(w)
         self.elements_layout.addWidget(w)
-        
 
     def add_folder(self, f):
         

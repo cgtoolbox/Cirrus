@@ -87,7 +87,7 @@ class ElementFetcherThread(QtCore.QRunnable):
             
             if self.cancel: return
 
-            el = folder + '/' + element
+            el = folder + element
             if not os.path.exists(el):
                 continue
 
@@ -104,6 +104,7 @@ class ElementFetcherThread(QtCore.QRunnable):
 
             else:
                 if element.endswith(awsv_objects.METADATA_IDENTIFIER):
+                    remove_unused_metadata(el)
                     continue
                 else:
                     f = clean_root + element
@@ -117,7 +118,7 @@ class ElementFetcherThread(QtCore.QRunnable):
 class FetchStateSignals(QtCore.QObject):
 
     start_sgn = QtCore.Signal()
-    end_sgn = QtCore.Signal(int, dict)
+    end_sgn = QtCore.Signal(str, dict)
 
 class FetchStateThread(QtCore.QRunnable):
 
@@ -132,26 +133,8 @@ class FetchStateThread(QtCore.QRunnable):
     def run(self):
 
         self.signals.start_sgn.emit()
-        is_on_cloud = check_object(self.local_file_path) is not None
-        metadata = get_metadata(self.local_file_path)
-        if not metadata:
-            metadata = {}
-
-        if is_on_cloud:
-
-            if not os.path.exists(self.local_file_path):
-                self.signals.end_sgn.emit(awsv_objects.FileState.CLOUD_ONLY, metadata)
-                return
-            
-            is_latest = is_local_file_latest(self.local_file_path)
-            if not is_latest:
-                self.signals.end_sgn.emit(awsv_objects.FileState.CLOUD_AND_LOCAL_NOT_LATEST, metadata)
-                return
-
-            self.signals.end_sgn.emit(awsv_objects.FileState.CLOUD_AND_LOCAL_LATEST, metadata)
-
-        else:
-            self.signals.end_sgn.emit(awsv_objects.FileState.LOCAL_ONLY, metadata)
+        file_state, metadata = refresh_state(self.local_file_path)
+        self.signals.end_sgn.emit(file_state, metadata)
 
 # Files IO thread used when a file is being sent to the cloud
 # or downloaded from the cloud.

@@ -26,6 +26,8 @@ reload(awsv_plugin_parser)
 
 from AWS_Vault_core.awsv_connection import ConnectionInfos
 from AWS_Vault_core.awsv_connection import init_connection
+from AWS_Vault_core import awsv_io
+reload(awsv_io)
 
 ICONS = os.path.dirname(__file__) + "\\icons\\"
 
@@ -456,3 +458,5 @@ class MainWidget(QtWidgets.QFrame):
             panel.bucket = None
 
         super(MainWidget, self).closeEvent(event)
+        
+        
