@@ -37,6 +37,9 @@
     <Compile Include="awsv_objects.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="awsv_plugin_manager.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="awsv_plugin_parser.py">
       <SubType>Code</SubType>
     </Compile>

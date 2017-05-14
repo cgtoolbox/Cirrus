@@ -2,10 +2,12 @@
   "plugins": [
     {
       "enable": "True",
-      "software": [ "houdinicore", "hescape", "hindie", "houdinifx", "houdini" ],
+      "plugin_name": "houdini",
+      "software_executable": [ "houdinicore", "hescape", "hindie", "houdinifx", "houdini" ],
       "script": "houdini.py",
-      "binding": [
+      "bindings": [
         {
+          "uid": "3ffa03e4-00c3-4bda-b7ff-084f9532b18e",
           "files": [ "bgeo", "bgeo.gz", "bgeogz" ],
           "methods": {
             "on_get": "reload_geo",
@@ -18,6 +20,7 @@
           }
         },
         {
+          "uid": "17247897-51c8-4697-a2d7-c7ca82bc47c8",
           "files": [ "hip", "hipnc", "hiplc" ],
           "methods": {
             "on_get": null,
@@ -33,9 +36,10 @@
     },
     {
       "enable": "True",
-      "software": [ "maya" ],
+      "plugin_name": "maya",
+      "software_executable": [ "maya" ],
       "script": "maya.py",
-      "binding": [ ]
+      "bindings": [ ]
     }
   ]
 }

@@ -24,6 +24,9 @@ reload(panels)
 from AWS_Vault_core import awsv_plugin_parser
 reload(awsv_plugin_parser)
 
+from AWS_Vault_core import awsv_plugin_manager
+reload(awsv_plugin_manager)
+
 from AWS_Vault_core.awsv_connection import ConnectionInfos
 from AWS_Vault_core.awsv_connection import init_connection
 from AWS_Vault_core import awsv_io
@@ -293,7 +296,7 @@ class MainWidget(QtWidgets.QFrame):
     def __init__(self, parent=None):
         super(MainWidget, self).__init__(parent=parent)
 
-        awsv_plugin_parser.parse_plugin()
+        awsv_plugin_parser.get_plugin()
 
         self.setProperty("houdiniStyle", IS_HOUDINI)
         self.setWindowFlags(QtCore.Qt.Tool)
@@ -332,6 +335,10 @@ class MainWidget(QtWidgets.QFrame):
         self.auto_check_state_act = QtWidgets.QAction("Auto Check Files State", self)
         self.auto_check_state_act.setCheckable(True)
         self.options_menu.addAction(self.auto_check_state_act)
+        self.options_menu.addSeparator()
+        self.open_plug_manager_act = QtWidgets.QAction("Plugin Manager", self)
+        self.open_plug_manager_act.triggered.connect(self.open_plugin_manager)
+        self.options_menu.addAction(self.open_plug_manager_act)
         
         self.main_layout.addWidget(self.main_menu)
 
@@ -339,6 +346,11 @@ class MainWidget(QtWidgets.QFrame):
         self.main_layout.addWidget(self.init_button)
 
         self.setLayout(self.main_layout)
+
+    def open_plugin_manager(self):
+
+        self.plug_manager_w = awsv_plugin_manager.PluginManager(self)
+        self.plug_manager_w.show()
 
     def close_project(self):
 
