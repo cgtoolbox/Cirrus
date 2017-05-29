@@ -1,47 +1,62 @@
 {
-  "plugins": [
-    {
-      "enable": "True",
-      "plugin_name": "houdini",
-      "software_executable": [ "houdinicore", "hescape", "hindie", "houdinifx", "houdini" ],
-      "script": "houdini.py",
-      "bindings": [
+    "version": "1.0.0", 
+    "plugins": [
         {
-          "uid": "3ffa03e4-00c3-4bda-b7ff-084f9532b18e",
-          "files": [ "bgeo", "bgeo.gz", "bgeogz" ],
-          "methods": {
-            "on_get": "reload_geo",
-            "on_save": null,
-            "on_lock": null,
-            "on_icon_clicked": {
-              "import_bgeo": "Import geo to Current file",
-              "preview_bgeo": "Preview geo in Gplay"
-            }
-          }
-        },
+            "software_executable": [
+                "houdinicore", 
+                "hescape", 
+                "hindie", 
+                "houdinifx", 
+                "houdini"
+            ], 
+            "bindings": [
+                {
+                    "files": [
+                        "bgeo", 
+                        "bgeo.gz", 
+                        "bgeogz"
+                    ], 
+                    "uid": "3ffa03e4-00c3-4bda-b7ff-084f9532b18e", 
+                    "methods": {
+                        "on_lock": null, 
+                        "on_icon_clicked": {
+                            "import_bgeo": "Import geo to Current file", 
+                            "preview_bgeo": "Preview geo in Gplay"
+                        }, 
+                        "on_save": "preview_bgeo", 
+                        "on_get": "reload_geo"
+                    }
+                }, 
+                {
+                    "files": [
+                        "hip", 
+                        "hipnc", 
+                        "hiplc"
+                    ], 
+                    "uid": "17247897-51c8-4697-a2d7-c7ca82bc47c8", 
+                    "methods": {
+                        "on_lock": null, 
+                        "on_icon_clicked": {
+                            "open_hip": "Open Hip file", 
+                            "merge_hip": "Merge Hip File"
+                        }, 
+                        "on_save": null, 
+                        "on_get": null
+                    }
+                }
+            ], 
+            "enable": "True", 
+            "plugin_name": "houdini", 
+            "script": "houdini.py"
+        }, 
         {
-          "uid": "17247897-51c8-4697-a2d7-c7ca82bc47c8",
-          "files": [ "hip", "hipnc", "hiplc" ],
-          "methods": {
-            "on_get": null,
-            "on_save": null,
-            "on_lock": null,
-            "on_icon_clicked": {
-              "merge_hip": "Merge Hip File",
-              "open_hip": "Open Hip file"
-            }
-          }
+            "software_executable": [
+                "maya"
+            ], 
+            "bindings": [], 
+            "enable": "True", 
+            "plugin_name": "maya", 
+            "script": "maya.py"
         }
-      ]
-    },
-    {
-      "enable": "True",
-      "plugin_name": "maya",
-      "software_executable": [ "maya" ],
-      "script": "maya.py",
-      "bindings": [ ]
-    }
-  ]
+    ]
 }
-
-

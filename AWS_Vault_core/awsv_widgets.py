@@ -316,6 +316,7 @@ class MainWidget(QtWidgets.QFrame):
         self.main_menu = QtWidgets.QMenuBar(self)
         self.main_menu.setFixedHeight(25)
         self.file_menu = self.main_menu.addMenu("File")
+
         self.open_proj_act = QtWidgets.QAction("Open a project", self)
         self.open_proj_act.setIcon(QtGui.QIcon(ICONS + "folder_open.svg"))
         self.open_proj_act.triggered.connect(self.init_root)
@@ -337,6 +338,7 @@ class MainWidget(QtWidgets.QFrame):
         self.options_menu.addAction(self.auto_check_state_act)
         self.options_menu.addSeparator()
         self.open_plug_manager_act = QtWidgets.QAction("Plugin Manager", self)
+        self.open_plug_manager_act.setIcon(QtGui.QIcon(ICONS + "plugin.svg"))
         self.open_plug_manager_act.triggered.connect(self.open_plugin_manager)
         self.options_menu.addAction(self.open_plug_manager_act)
         

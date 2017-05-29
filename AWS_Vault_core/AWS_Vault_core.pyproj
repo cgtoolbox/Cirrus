@@ -37,10 +37,16 @@
     <Compile Include="awsv_objects.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="awsv_plugin_errors.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="awsv_plugin_manager.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="awsv_plugin_parser.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="awsv_plugin_settings.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="awsv_threading.py">
@@ -68,6 +74,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="plugins\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="py_highlighter.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Test.py">

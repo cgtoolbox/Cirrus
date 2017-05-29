@@ -5,6 +5,7 @@ import imp
 import uuid
 import logging
 from AWS_Vault_core.awsv_logger import Logger
+from AWS_Vault_core.awsv_plugin_errors import *
 
 from PySide2 import QtWidgets
 
@@ -21,25 +22,6 @@ plugin_settings = os.path.dirname(__file__) + os.sep + "plugins" + os.sep + "plu
 plugins_scripts = os.path.dirname(__file__) + os.sep + "plugins"
 EXE = sys.executable
 
-class PluginFileNotFoundError(Exception):
-    """ Raised if a given plugin file ( python ) is not found under the plugins folder
-    """
-    pass
-
-class InvalidPluginFileMethodAlreadyExistError(Exception):
-    """ Raise when two methods with the same name exist in a plugin file
-    """
-    pass
-
-class InvalidPluginSettingsError(Exception):
-    """ Raised when an error is found in plugin_settings.json formatting
-    """
-    pass
-
-class InvalidGetMethodError(Exception):
-    """ Raised when the get() method of PluginInfos is used with invalid arguments
-    """
-    pass
 
 class PluginRepository():
 
@@ -130,153 +112,6 @@ class Plugin(object):
             return None
 
         return menu
-
-class PluginSettingInfo():
-
-    def __init__(self, inf):
-
-        self.enable = inf.get("enable", False)
-        self.plugin_name = inf.get("plugin_name")
-        self.software_executable = inf.get("software_executable")
-        self.script = inf.get("script")
-        self.bindings = [_PluginFileBindings(_inf) for _inf in inf.get("bindings")]
-        self.script_code = self.parse_plugin_code(self.script)
-
-    def get_plugin_name(self):
-
-        return self.plugin_name
-
-    def get_plugin_exe(self):
-
-        return self.software_executable
-
-    def parse_plugin_code(self, file):
-        """ Parse source code of a given file and return methodes names + code
-        """
-
-        plugin_path = plugins_scripts + os.sep + file
-        if not os.path.exists(plugin_path):
-            return None
-
-        with open(plugin_path, 'r') as f:
-            data = f.readlines()
-
-        methodes = {}
-        cur_method = ""
-
-        for i, line in enumerate(data):
-
-            if line.startswith("def ") and line.endswith("(**kwargs):\n"):
-                line = line.replace("def ", "").replace("(**kwargs):\n", "")
-                if line in methodes.keys():
-                    raise InvalidPluginFileMethodAlreadyExistError(plugin_path + " line: " + str(i))
-
-                methodes[line] = ""
-                cur_method = line
-                continue
-
-            else:
-                if cur_method != "":
-                    methodes[cur_method] += line.replace('    ', '', 1)
-
-        return methodes
-
-    def _get_result(self, obj, attrs):
-
-        if len(attrs) == 1:
-            return getattr(obj, attrs[0], None)
-        else:
-            return [getattr(obj, a, None) for a in attrs]
-
-    def get(self, attr, level=None, uid=""):
-
-        attrs = attr.replace(' ', '').split(',')
-
-        if level is None:
-            return self._get_result(self, attrs)
-
-        if level == "bindings":
-            b = self.get_bindings(uid)
-            if not b:
-                return None
-            if uid != "":
-                return self._get_result(b[0], attrs)
-                
-            return [self._get_result(n, attrs) for n in b]
-
-    def get_bindings(self, uid=""):
-        
-        if uid != "":
-            return [b for b in self.bindings if b.uid == uid]
-
-        return self.bindings
-
-class _PluginFileBindings():
-
-    def __init__(self, inf):
-
-        self.uid = inf.get("uid")
-        self.files = inf.get("files")
-        self.methods = _PluginBindingMethods(inf.get("methods"))
-
-class _PluginBindingMethods():
-
-    def __init__(self, kwargs):
-
-        self.on_get = kwargs.get("on_get")
-        self.on_save = kwargs.get("on_save")
-        self.on_lock = kwargs.get("on_lock")
-        self.on_icon_clicked = kwargs.get("on_icon_clicked")
-
-class PluginSettings():
-    """ Object which saves the data parsed from the plugin_settings.json
-        
-        An attribute can be get using the methode get(attr, [level], [uid], [plugin_name]) following this:
-
-        attr => attr1,attr2,... attributes you want to get
-        optional level => binding or methods to set which level of data you want to get, is left blank the
-                          level will be set to plugin itself ( highest level ).
-        optional uid => for binding level only, set a specific binding uid, if left blank a list of results
-                        will be resturn for each bindind found.
-        optional plugin_name => can be used when level is left blank, to get data from a specific plugin.
-        
-    """
-    def __init__(self):
-
-        self.setting_data = None
-        self.plugins = []
-        self.read_settings()
-
-    def read_settings(self):
-
-        with open(plugin_settings) as data:
-            plugin_data = json.load(data)
-        self.setting_data = plugin_data
-
-        for p in self.setting_data["plugins"]:
-            self.plugins.append(PluginSettingInfo(p))
-
-        return plugin_data
-
-    def _generate_uuid():
-
-        return str(uuid.uuid4())
-    
-    def get(self, attr, level=None, uid="", plugin_name=""):
-
-        if level is not None and plugin_name != "":
-            raise InvalidGetMethodError()
-
-        if plugin_name == "":
-            return [p.get(attr, level, uid) for p in self.plugins]
-
-        return [p.get(attr, level, uid) for p in self.plugins \
-                if p.get_plugin_name() == plugin_name][0]
-
-
-def get_plugin_files_filter(plugin_name):
-
-    return
 
 def get_plugin():
     """ Parse and get valid plugins for current app
