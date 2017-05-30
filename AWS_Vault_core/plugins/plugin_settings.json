@@ -14,7 +14,8 @@
                     "files": [
                         "bgeo", 
                         "bgeo.gz", 
-                        "bgeogz"
+                        "bgeogz", 
+                        "bgeo.sc"
                     ], 
                     "uid": "3ffa03e4-00c3-4bda-b7ff-084f9532b18e", 
                     "methods": {

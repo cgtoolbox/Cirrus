@@ -231,7 +231,50 @@ class _OnIconMenuEntry(QtWidgets.QWidget):
 
         self.top_ui.remove_entry(self)
 
+class FileBindingsInput(QtWidgets.QDialog):
 
+    def __init__(self, values, parent=None):
+        super(FileBindingsInput, self).__init__(parent=parent)
+
+        self.setWindowTitle("Edit file bindings")
+
+        self.validated = False
+        self.entries_values = values
+
+        main_layout = QtWidgets.QVBoxLayout()
+        main_layout.setAlignment(QtCore.Qt.AlignTop)
+
+        entries_layout = QtWidgets.QHBoxLayout()
+        entries_layout.setAlignment(QtCore.Qt.AlignLeft)
+
+        entries_layout.addWidget(QtWidgets.QLabel("Entries (separated by a coma ','):"))
+        self.entries = QtWidgets.QLineEdit(values)
+        entries_layout.addWidget(self.entries)
+        main_layout.addLayout(entries_layout)
+
+        btn_layout = QtWidgets.QHBoxLayout()
+
+        valid_btn = QtWidgets.QPushButton("Ok")
+        valid_btn.setIcon(QtGui.QIcon(ICONS + "checkmark.svg"))
+        valid_btn.setIconSize(QtCore.QSize(22, 22))
+        valid_btn.clicked.connect(self.valid)
+        btn_layout.addWidget(valid_btn)
+
+        cancel_btn = QtWidgets.QPushButton("Cancel")
+        cancel_btn.setIcon(QtGui.QIcon(ICONS + "close.svg"))
+        cancel_btn.setIconSize(QtCore.QSize(22, 22))
+        cancel_btn.clicked.connect(self.close)
+        btn_layout.addWidget(cancel_btn)
+
+        main_layout.addLayout(btn_layout)
+
+        self.setLayout(main_layout)
+
+    def valid(self):
+
+        self.validated = True
+        self.entries_values = self.entries.text()
+        self.close()
 
 class PluginInfos(QtWidgets.QWidget):
 
@@ -272,6 +315,7 @@ class PluginInfos(QtWidgets.QWidget):
         edit_files_btn.setIcon(QtGui.QIcon(ICONS + "edit.svg"))
         edit_files_btn.setIconSize(QtCore.QSize(25, 25))
         edit_files_btn.setToolTip("Edit files list")
+        edit_files_btn.clicked.connect(self.edit_file_bindings)
         self.file_bindings_lay.addWidget(edit_files_btn)
 
         self.main_layout.addLayout(self.file_bindings_lay)
@@ -358,6 +402,22 @@ class PluginInfos(QtWidgets.QWidget):
         self.update_selected_method()
 
         self.setLayout(self.main_layout)
+
+    def edit_file_bindings(self):
+        
+        cur = self.file_bindins_combo.currentText()
+        w = FileBindingsInput(cur, self)
+        w.exec_()
+        if w.entries_values != cur and w.validated:
+            self.toggle_unsaved_changes()
+
+            cur_binding_uid = self.bindings[cur]
+            self.bindings[w.entries_values] = cur_binding_uid
+            del self.bindings[cur]
+
+            binding = [b for b in self.plugin_infos.bindings \
+                       if b.uid == cur_binding_uid][0]
+            binding.files = w.entries_values.replace(' ', '').split(',')
 
     def create_method(self):
 
