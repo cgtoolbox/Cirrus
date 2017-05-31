@@ -14,6 +14,8 @@ reload(awsv_plugin_settings)
 from AWS_Vault_core import py_highlighter
 reload(py_highlighter)
 
+from AWS_Vault_core.awsv_logger import Logger
+
 ICONS          = os.path.dirname(__file__) + "\\icons\\"
 PLUGINS_FOLDER = os.path.dirname(__file__) + "\\plugins\\"
 
@@ -231,6 +233,81 @@ class _OnIconMenuEntry(QtWidgets.QWidget):
 
         self.top_ui.remove_entry(self)
 
+class MethodDeletionWarning(QtWidgets.QDialog):
+
+    def __init__(self, data, parent=None):
+        super(MethodDeletionWarning, self).__init__(parent=parent)
+
+        self.VALID = False
+
+        self.setWindowTitle("Warning")
+        main_layout = QtWidgets.QVBoxLayout()
+
+        sub_layout = QtWidgets.QHBoxLayout()
+        sub_layout.setAlignment(QtCore.Qt.AlignLeft)
+
+        risk = QtWidgets.QLabel("")
+        risk.setPixmap(QtGui.QIcon(ICONS + "risk.svg").pixmap(64,64))
+        risk.setFixedWidth(64)
+        risk.setFixedHeight(64)
+        sub_layout.addWidget(risk)
+
+        warning_layout = QtWidgets.QVBoxLayout()
+        warning_layout.setAlignment(QtCore.Qt.AlignTop)
+        warning_layout.addWidget(QtWidgets.QLabel("One or more bindings use this method !"))
+        warning_layout.addWidget(QtWidgets.QLabel("Binding(s) involved:"))
+
+        for k, v in data.iteritems():
+
+            _lay = QtWidgets.QHBoxLayout()
+            
+            _lbl = QtWidgets.QLabel("")
+            _lbl.setContentsMargins(15, 0, 0, 0)
+            _lbl.setPixmap(QtGui.QIcon(ICONS + "white_list.svg").pixmap(24, 24))
+            _lbl.setFixedWidth(39)
+
+            _lay.addWidget(_lbl)
+            _lay.addWidget(QtWidgets.QLabel(k))
+
+            warning_layout.addLayout(_lay)
+
+            _lay2 = QtWidgets.QHBoxLayout()
+            
+            _lbl2 = QtWidgets.QLabel("")
+            _lbl2.setContentsMargins(30, 0, 0, 0)
+            _lbl2.setPixmap(QtGui.QIcon(ICONS + "arrow_right.svg").pixmap(16, 16))
+            _lbl2.setFixedWidth(46)
+
+            _lay2.addWidget(_lbl2)
+            _lay2.addWidget(QtWidgets.QLabel(', '.join(v[1:])))
+
+            warning_layout.addLayout(_lay2)
+            warning_layout.addWidget(QtWidgets.QLabel(""))
+
+        sub_layout.addLayout(warning_layout)
+        main_layout.addLayout(sub_layout)
+
+        btn_layout = QtWidgets.QHBoxLayout()
+        self.accept_btn = QtWidgets.QPushButton("Yes, Delete Method")
+        self.accept_btn.setIcon(QtGui.QIcon(ICONS + "checkmark.svg"))
+        self.accept_btn.setIconSize(QtCore.QSize(26, 26))
+        self.accept_btn.clicked.connect(self.valid_act)
+        btn_layout.addWidget(self.accept_btn)
+
+        self.cancel_btn = QtWidgets.QPushButton("Cancel")
+        self.cancel_btn.setIcon(QtGui.QIcon(ICONS + "close.svg"))
+        self.cancel_btn.setIconSize(QtCore.QSize(26, 26))
+        self.cancel_btn.clicked.connect(self.close)
+        btn_layout.addWidget(self.cancel_btn)
+
+        main_layout.addLayout(btn_layout)
+        self.setLayout(main_layout)
+
+    def valid_act(self):
+
+        self.VALID = True
+        self.close()
+
 class FileBindingsInput(QtWidgets.QDialog):
 
     def __init__(self, values, parent=None):
@@ -384,6 +461,7 @@ class PluginInfos(QtWidgets.QWidget):
         delete_method_btn.setIcon(QtGui.QIcon(ICONS + "close.svg"))
         delete_method_btn.setIconSize(QtCore.QSize(25, 25))
         delete_method_btn.setToolTip("Delete method.")
+        delete_method_btn.clicked.connect(self.delete_method)
         methods_lay.addWidget(delete_method_btn)
 
         self.main_layout.addLayout(methods_lay)
@@ -451,7 +529,7 @@ file_path = kwargs["path"]"""
             self.code_editor.setPlainText(default_code)
             self.script_code[meth_name] = default_code
             self.creating_new_method = False
-            self.toggle_unsaved_changes()
+            self.save_method_code(meth_name, False)
         else:
             self.methods_combo.setCurrentText(self.cur_selected_method)
 
@@ -532,6 +610,81 @@ file_path = kwargs["path"]"""
                 self.assigned_method_name.setText("Assigned Method: " + cur_meth)
             else:
                 self.assigned_method_name.setText("Assigned Method: None")
+
+    def delete_method(self):
+
+        selected_method = self.methods_combo.currentText()
+
+        r = QtWidgets.QMessageBox.question(self, "Confirm",
+                                           "Delete the method: " + selected_method + " ?")
+        if r == QtWidgets.QMessageBox.No: return
+
+        Logger.Log.debug("Deleting method: " + selected_method)
+        
+        m = self.script_code.get(selected_method)
+        if not m: return
+
+        # check if any bindings use this method, if yes display a warning.
+        # if the warning is ignored, set the binding methods to None.
+        warning_bindings = {}
+        for binding in self.plugin_infos.bindings:
+
+            uid = binding.uid
+            result = []
+            on_get = self.plugin_infos.get("on_get", level="methods", uid=uid)
+            if on_get == selected_method:
+                result.append("on_get")
+
+            on_lock = self.plugin_infos.get("on_lock", level="methods", uid=uid)
+            if on_lock == selected_method:
+                result.append("on_lock")
+
+            on_save = self.plugin_infos.get("on_save", level="methods", uid=uid)
+            if on_save == selected_method:
+                result.append("on_save")
+
+            on_icon_clicked = self.plugin_infos.get("on_icon_clicked", level="methods", uid=uid)
+            if selected_method in on_icon_clicked.iterkeys():
+                result.append("on_clicked")
+
+            if result:
+                result.insert(0, uid)
+                warning_bindings[','.join(binding.files)] = result
+
+        if warning_bindings != {}:
+
+            r = MethodDeletionWarning(warning_bindings, self)
+            r.exec_()
+            if not r.VALID: return
+
+        del self.script_code[selected_method]
+
+        script_file = PLUGINS_FOLDER + self.plugin_infos.script
+        with open(script_file, 'r') as f:
+            raw_data = f.readlines()
+
+        code = []
+        in_method = False
+        for i, c in enumerate(raw_data):
+
+            if c == "def " + selected_method + "(**kwargs):\n":
+                in_method = True
+                continue
+
+            elif c.startswith("def") and c.endswith("(**kwargs):\n") \
+                and not selected_method in c:
+                in_method = False
+
+            if in_method: continue
+               
+            code.append(c)
+        
+        with open(script_file, 'w') as f:
+            f.writelines(code)
+
+        j = self.methods_combo.findText(selected_method)
+        self.methods_combo.removeItem(j)
+
 
     def save_method_code(self, selected_method=None, ask=True):
 

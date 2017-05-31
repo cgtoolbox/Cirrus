@@ -82,14 +82,27 @@ class PluginSettingInfo():
             if not b:
                 return None
             if uid != "":
-                return self._get_result(b[0], attrs)
+                return self._get_result(b, attrs)
                 
             return [self._get_result(n, attrs) for n in b]
+
+        if level == "methods":
+
+            bindings = self.get_bindings(uid)
+
+            if uid != "":
+                methods = bindings.methods
+                return self._get_result(methods, attrs)
+                    
+            else:
+                methods = [b.methods for b in bindings]
+                return [self._get_result(n, attrs) for n in methods]
+
 
     def get_bindings(self, uid=""):
         
         if uid != "":
-            return [b for b in self.bindings if b.uid == uid]
+            return [b for b in self.bindings if b.uid == uid][0]
 
         return self.bindings
 
