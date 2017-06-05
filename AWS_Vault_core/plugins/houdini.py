@@ -15,8 +15,7 @@ def import_bgeo(**kwargs):
     file_node = container.node("file1")
     file_node.setName(f + "_import")
     file_node.parm("file").set(path)
-    
-    
+        
 def preview_bgeo(**kwargs):
 
     import subprocess

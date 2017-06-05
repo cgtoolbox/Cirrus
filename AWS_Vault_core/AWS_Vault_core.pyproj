@@ -85,7 +85,6 @@
     <Compile Include="__init__.py" />
   </ItemGroup>
   <ItemGroup>
-    <InterpreterReference Include="{2af0f10d-7135-4994-9156-5d01c9c11b7e}\2.7" />
     <InterpreterReference Include="{a7e3a1eb-5ab6-4f1e-8fe1-b73cebc0fced}\2.7" />
   </ItemGroup>
   <ItemGroup>

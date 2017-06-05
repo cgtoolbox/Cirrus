@@ -14,13 +14,16 @@ EXE = sys.executable
 
 class PluginSettingInfo():
 
-    def __init__(self, inf, plugin_settings):
+    def __init__(self, inf={}, plugin_settings=None):
 
         self.enable = inf.get("enable", False)
         self.plugin_name = inf.get("plugin_name")
-        self.software_executable = inf.get("software_executable")
+        self.software_executable = inf.get("software_executable", "")
         self.script = inf.get("script")
-        self.bindings = [_PluginFileBindings(_inf, self) for _inf in inf.get("bindings")]
+        if inf.get("bindings"):
+            self.bindings = [_PluginFileBindings(_inf, self) for _inf in inf.get("bindings")]
+        else:
+            self.bindings = [_PluginFileBindings({}, None)]
         self.script_code = self.parse_plugin_code(self.script)
         self.plugin_settings = plugin_settings
 
@@ -97,8 +100,7 @@ class PluginSettingInfo():
             else:
                 methods = [b.methods for b in bindings]
                 return [self._get_result(n, attrs) for n in methods]
-
-
+    
     def get_bindings(self, uid=""):
         
         if uid != "":
@@ -126,11 +128,14 @@ class PluginSettingInfo():
 
 class _PluginFileBindings():
 
-    def __init__(self, inf, settings):
+    def __init__(self, inf={}, settings=None):
 
         self.uid = inf.get("uid")
-        self.files = inf.get("files")
-        self.methods = _PluginBindingMethods(inf.get("methods"), self)
+        self.files = inf.get("files", [])
+        if inf.get("methods"):
+            self.methods = _PluginBindingMethods(inf.get("methods"), self)
+        else:
+            self.methods = _PluginBindingMethods({}, self)
         self.settings = settings
 
     def get_date_tree(self):
@@ -189,6 +194,7 @@ class PluginSettings():
 
     def read_settings(self):
 
+        self.plugins = []
         with open(plugin_settings) as data:
             plugin_data = json.load(data)
         self.setting_data = plugin_data
@@ -198,7 +204,23 @@ class PluginSettings():
 
         return plugin_data
 
-    def _generate_uuid():
+    def add_plugin(self, plugin_name):
+
+        uid = self._generate_uuid()
+        infos = {"plugin_name":plugin_name, "enable": True, "uid":uid,
+                 "script": plugin_name.replace(' ', '_') + ".py"}
+        p = PluginSettingInfo(infos, self)
+        data = p.get_data_tree()
+
+        plugins = self.read_settings()
+        plugins["plugins"].append(data)
+
+        with open(plugin_settings, 'w') as f:
+            json.dump(plugins, f, indent=4)
+
+        return data
+
+    def _generate_uuid(self):
 
         return str(uuid.uuid4())
     

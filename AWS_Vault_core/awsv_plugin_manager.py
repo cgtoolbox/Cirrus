@@ -19,14 +19,73 @@ from AWS_Vault_core.awsv_logger import Logger
 ICONS          = os.path.dirname(__file__) + "\\icons\\"
 PLUGINS_FOLDER = os.path.dirname(__file__) + "\\plugins\\"
 
+class MethodListModel(QtCore.QAbstractListModel):
+
+    def __init__(self, methods=[], parent=None):
+        super(MethodListModel, self).__init__(parent=parent)
+        self.__methods = methods
+
+    def rowCount(self, parent):
+
+        return len(self.__methods)
+
+    def data(self, index, role):
+
+        r = index.row()
+        val = self.__methods[r]
+
+        if role == QtCore.Qt.ToolTipRole:
+
+            if val == "Create":
+                return "Create a new method"
+
+            if val == "None":
+                return "Set the current method to None"
+
+            return "Method '" + val + "' code."
+
+        if role == QtCore.Qt.DecorationRole:
+
+            if val == "Create":
+                ico = QtGui.QIcon(ICONS + "add.svg")
+                return ico
+
+            if val == "None":
+                ico = QtGui.QIcon(ICONS + "close.svg")
+                return ico
+
+            ico = QtGui.QIcon(ICONS + "arrow_right.svg")
+            return ico
+
+        if role == QtCore.Qt.DisplayRole:
+            return val
+
+    def insertRows(self, position, rows=1, parent=QtCore.QModelIndex(), value=""):
+
+        self.beginInsertRows(QtCore.QModelIndex(),
+                             position, position + rows - 1)
+
+        for i in range(rows):
+            self.__methods.insert(position, value)
+
+        self.endInsertRows()
+
+    def removeRows(self, position=0, rows=1, parent=QtCore.QModelIndex(), value=""):
+
+        idx = self.__methods.index(value)
+        self.beginRemoveRows(parent, idx, idx)
+        self.__methods.pop(idx)
+        self.endRemoveRows()
+        return True
+
 class PluginEntries(QtWidgets.QWidget):
 
-    def __init__(self, parent=None):
+    def __init__(self, plugin_settings, parent=None):
         super(PluginEntries, self).__init__(parent=parent)
 
         self.plugin_manager = parent
 
-        self.plugin_settings = awsv_plugin_settings.PluginSettings()
+        self.plugin_settings = plugin_settings
         self.plugins = self.plugin_settings.plugins
 
         self.setProperty("houdiniStyle", True)
@@ -75,25 +134,32 @@ class PluginEntries(QtWidgets.QWidget):
 
     def update_selected_plugin(self):
 
-        if self.plugins_combo.currentText() == "Create":
-            
-            if self._adding_item: return
+        if self._adding_item: return
 
-            fam_name, ok = QtWidgets.QInputDialog.getText(self, 'Enter Name', 'Enter plugin name')
+        if self.plugins_combo.currentText() == "Create":
+
+            plug_name, ok = QtWidgets.QInputDialog.getText(self, 'Enter Name', 'Enter plugin name')
             if ok:
                 self._adding_item = True
                 c = self.plugins_combo.count()
-                self.plugins_combo.insertItem(c-1, fam_name)
-                self.plugins_combo.setCurrentText(fam_name)
+                self.plugins_combo.insertItem(0, plug_name)
+                self.plugins_combo.setCurrentIndex(0)
                 self.p_fam_executables.setText("")
+                self.plugin_manager.add_plugin(plug_name)
+                self.plugins_combo.setCurrentText(plug_name)
+                self.selected_familly = plug_name
             else:
                 self.plugins_combo.setCurrentText(self.selected_familly)
 
             self._adding_item = False
             return
 
+        cur = self.plugins_combo.currentText()
+        if cur == "Create":
+            cur = self.selected_familly
+
         selected_plugin = [n for n in self.plugins \
-            if n.get_plugin_name() == self.plugins_combo.currentText()][0]
+            if n.get_plugin_name() == cur][0]
 
         selected_fam_exec = selected_plugin.get_plugin_exe()
 
@@ -152,9 +218,10 @@ class CodeEditor(QtWidgets.QPlainTextEdit):
 
 class OnIconMenuEntries(QtWidgets.QFrame):
 
-    def __init__(self, parent=None):
+    def __init__(self, model, parent=None):
         super(OnIconMenuEntries, self).__init__(parent=parent)
         self.entries = {}
+        self.model = model
 
         self.setFrameStyle(QtWidgets.QFrame.Panel | QtWidgets.QFrame.Raised)
         self.setLineWidth(1)
@@ -189,6 +256,7 @@ class OnIconMenuEntries(QtWidgets.QFrame):
             return
 
         w = _OnIconMenuEntry(name=name,
+                             model=self.model,
                              method=method,
                              parent=self)
         self.entries_layout.addWidget(w)
@@ -197,7 +265,7 @@ class OnIconMenuEntries(QtWidgets.QFrame):
 
 class _OnIconMenuEntry(QtWidgets.QWidget):
 
-    def __init__(self, name="", method="", parent=None):
+    def __init__(self, name="", model=None, method="", parent=None):
         super(_OnIconMenuEntry, self).__init__(parent=parent)
 
         self.name = name
@@ -215,6 +283,7 @@ class _OnIconMenuEntry(QtWidgets.QWidget):
         main_layout.addWidget(a)
 
         self.method_input = QtWidgets.QComboBox()
+        self.method_input.setModel(model)
         main_layout.addWidget(self.method_input)
 
         del_btn = QtWidgets.QPushButton("")
@@ -374,6 +443,16 @@ class PluginInfos(QtWidgets.QWidget):
                 self.bindings[', '.join(files)] = uid
                 self.methods[', '.join(files)] = self.plugin_infos.get("methods", level="bindings", uid=uid)
 
+        # methods available data
+        li = []
+        if self.script_code:
+            li = [v for v in self.script_code.iterkeys()]
+            li.append("Create")
+            li.append("None")
+        else:
+            li = ["Create", "None"]
+        self.method_list = MethodListModel(methods=li)
+
         self.main_layout = QtWidgets.QVBoxLayout()
         self.main_layout.setAlignment(QtCore.Qt.AlignTop)
 
@@ -414,7 +493,7 @@ class PluginInfos(QtWidgets.QWidget):
         self.assigned_method_name = QtWidgets.QLabel("Assigned Method: None")
         self.main_layout.addWidget(self.assigned_method_name)
 
-        self.menu_entries = OnIconMenuEntries(parent=self)
+        self.menu_entries = OnIconMenuEntries(self.method_list, parent=self)
         self.menu_entries.setVisible(False)
         self.main_layout.addWidget(self.menu_entries)
 
@@ -424,10 +503,7 @@ class PluginInfos(QtWidgets.QWidget):
         methods_lay.addWidget(QtWidgets.QLabel("Methods available:"))
         self.methods_combo = QtWidgets.QComboBox()
         methods_lay.addWidget(self.methods_combo)
-        if self.script_code:
-            self.methods_combo.addItems([v for v in self.script_code.iterkeys()])
-        self.methods_combo.addItem(QtGui.QIcon(ICONS + "add.svg"), "Create")
-        self.methods_combo.addItem(QtGui.QIcon(ICONS + "close.svg"), "None")
+        self.methods_combo.setModel(self.method_list)
 
         edit_methodname_btn = QtWidgets.QPushButton("")
         edit_methodname_btn.setFixedHeight(32)
@@ -515,7 +591,8 @@ class PluginInfos(QtWidgets.QWidget):
 
             self.creating_new_method = True
             meth_name = meth_name.replace(' ', '_')
-            self.methods_combo.insertItem(0, meth_name)
+            m = self.methods_combo.model()
+            m.insertRows(0, value=meth_name)
             self.methods_combo.setCurrentText(meth_name)
             self.cur_selected_method = meth_name
 
@@ -657,6 +734,26 @@ file_path = kwargs["path"]"""
             r.exec_()
             if not r.VALID: return
 
+            for r, v in warning_bindings.iteritems():
+
+                uid = v[0]
+                methods = v[1:]
+
+                binding = self.plugin_infos.get_bindings(uid=uid)
+                if not binding: continue
+
+                for m in methods:
+
+                    if m == "on_icon_clicked":
+                        pass
+
+                    else:
+                        met = binding.methods
+                        met.set(m, None)
+            
+            self.toggle_unsaved_changes()
+
+
         del self.script_code[selected_method]
 
         script_file = PLUGINS_FOLDER + self.plugin_infos.script
@@ -684,7 +781,6 @@ file_path = kwargs["path"]"""
 
         j = self.methods_combo.findText(selected_method)
         self.methods_combo.removeItem(j)
-
 
     def save_method_code(self, selected_method=None, ask=True):
 
@@ -769,18 +865,51 @@ class PluginManager(QtWidgets.QMainWindow):
 
         self.plugins = {}
 
+        self.plugin_settings = awsv_plugin_settings.PluginSettings()
+
         cw = QtWidgets.QWidget()
         main_layout = QtWidgets.QVBoxLayout()
         main_layout.setAlignment(QtCore.Qt.AlignTop)
         self.plugin_infos_layout = QtWidgets.QVBoxLayout()
         self.plugin_infos_layout.setAlignment(QtCore.Qt.AlignTop)
 
-        self.plugin_familly = PluginEntries(self)
-        main_layout.addWidget(self.plugin_familly)
+        self.plugin_entries = PluginEntries(self.plugin_settings, self)
+        main_layout.addWidget(self.plugin_entries)
         main_layout.addLayout(self.plugin_infos_layout)
 
         cw.setLayout(main_layout)
         self.setCentralWidget(cw)
+
+    def add_plugin(self, plugin_name):
+        
+        script = PLUGINS_FOLDER + plugin_name + ".py"
+        if os.path.exists(script):
+            QtWidgets.QMessageBox.critical(self, "Error",
+                                           "A plugin name " + plugin_name + " already exist.")
+            return
+        
+        default_code = '''"""
+WARNING: code generated by the awsv plugin manager, this code
+         should not be edited manually.
+"""
+def example_method(**kwargs):
+
+    # Write your method code here
+    # A 'kwargs' dict is available with these entries:
+    # kwargs["path"] => local file path
+    # kwargs["cloud_path"] => file path on the cloud
+    # kwargs["local_root"] => the current project's root folder
+
+    file_path = kwargs["path"]'''
+
+        with open(script, 'w') as f:
+            f.write(default_code)
+        
+        infos = self.plugin_settings.add_plugin(plugin_name)
+        self.plugin_settings.read_settings()
+        self.plugin_entries.plugins = self.plugin_settings.plugins
+        p = awsv_plugin_settings.PluginSettingInfo(infos, self)
+        self.display_file_infos(plugin_name, p)
 
     def display_file_infos(self, name, infos):
 
