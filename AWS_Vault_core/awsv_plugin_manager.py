@@ -1,4 +1,5 @@
 import os
+import itertools
 import sys
 
 from PySide2 import QtGui
@@ -379,13 +380,14 @@ class MethodDeletionWarning(QtWidgets.QDialog):
 
 class FileBindingsInput(QtWidgets.QDialog):
 
-    def __init__(self, values, parent=None):
+    def __init__(self, values, parent=None, existing_entries=[]):
         super(FileBindingsInput, self).__init__(parent=parent)
 
         self.setWindowTitle("Edit file bindings")
 
         self.validated = False
         self.entries_values = values
+        self.existing_entries = existing_entries
 
         main_layout = QtWidgets.QVBoxLayout()
         main_layout.setAlignment(QtCore.Qt.AlignTop)
@@ -418,8 +420,19 @@ class FileBindingsInput(QtWidgets.QDialog):
 
     def valid(self):
 
+        if self.existing_entries:
+            
+            cur = self.entries.text().replace(' ', '').split(',')
+            invalid_entires = [n for n in cur if n in self.existing_entries]
+            if invalid_entires:
+                msg = "Files already used in another binding:\n"
+                msg += ','.join(invalid_entires)
+                QtWidgets.QMessageBox.critical(self, "Error", msg)
+                return
+
         self.validated = True
-        self.entries_values = self.entries.text()
+        clean_entires = ", ".join(self.entries.text().replace(' ', '').split(','))
+        self.entries_values = clean_entires
         self.close()
 
 class PluginInfos(QtWidgets.QWidget):
@@ -435,6 +448,7 @@ class PluginInfos(QtWidgets.QWidget):
         self.methods = {}
         self.script_code = self.plugin_infos.script_code
         self.creating_new_method = False
+        self.creating_binding = False
         self.cur_selected_method = ""
 
         r = self.plugin_infos.get("files,uid", level="bindings")
@@ -460,10 +474,11 @@ class PluginInfos(QtWidgets.QWidget):
         self.file_bindings_lay.setAlignment(QtCore.Qt.AlignLeft)
         self.file_bindings_lay.addWidget(QtWidgets.QLabel("File Bindings:"))
 
-        self.file_bindins_combo = QtWidgets.QComboBox()
-        self.file_bindins_combo.addItems([v for v in self.bindings.iterkeys()])
-        self.file_bindins_combo.addItem(QtGui.QIcon(ICONS + "add.svg"), "Create")
-        self.file_bindings_lay.addWidget(self.file_bindins_combo)
+        self.file_bindings_combo = QtWidgets.QComboBox()
+        self.file_bindings_combo.addItems([v for v in self.bindings.iterkeys()])
+        self.file_bindings_combo.addItem(QtGui.QIcon(ICONS + "add.svg"), "Create")
+        self.file_bindings_combo.currentIndexChanged.connect(self.update_selected_binding)
+        self.file_bindings_lay.addWidget(self.file_bindings_combo)
         
         edit_files_btn = QtWidgets.QPushButton("")
         edit_files_btn.setFixedHeight(32)
@@ -473,6 +488,15 @@ class PluginInfos(QtWidgets.QWidget):
         edit_files_btn.setToolTip("Edit files list")
         edit_files_btn.clicked.connect(self.edit_file_bindings)
         self.file_bindings_lay.addWidget(edit_files_btn)
+
+        delete_files_bindings_btn = QtWidgets.QPushButton("")
+        delete_files_bindings_btn.setFixedHeight(32)
+        delete_files_bindings_btn.setFixedWidth(32)
+        delete_files_bindings_btn.setIcon(QtGui.QIcon(ICONS + "close.svg"))
+        delete_files_bindings_btn.setIconSize(QtCore.QSize(25, 25))
+        delete_files_bindings_btn.setToolTip("Delete selected files binding.")
+        delete_files_bindings_btn.clicked.connect(self.delete_files_binding)
+        self.file_bindings_lay.addWidget(delete_files_bindings_btn)
 
         self.main_layout.addLayout(self.file_bindings_lay)
 
@@ -557,9 +581,30 @@ class PluginInfos(QtWidgets.QWidget):
 
         self.setLayout(self.main_layout)
 
+    def create_file_binding(self):
+
+        exising_items = list(itertools.chain.from_iterable([n.files for \
+                        n in self.plugin_infos.bindings]))
+
+        w = FileBindingsInput("", self, existing_entries=exising_items)
+        
+        w.exec_()
+        if w.validated:
+            self.file_bindings_combo.insertItem(0, w.entries_values)
+            self.file_bindings_combo.setCurrentIndex(0)
+            uid = self.plugin_infos.plugin_settings._generate_uuid()
+            infos = {"uid":uid,
+                     "files":w.entries_values.replace(' ','').split(','),
+                     "methods":{"on_get":None, "on_save":None,
+                                "on_lock":None, "on_icon_clicked":[]}}
+            new_b = awsv_plugin_settings._PluginFileBindings(infos, self)
+            self.plugin_infos.bindings.append(new_b)
+            self.methods[w.entries_values] = new_b.methods
+            self.toggle_unsaved_changes()
+
     def edit_file_bindings(self):
         
-        cur = self.file_bindins_combo.currentText()
+        cur = self.file_bindings_combo.currentText()
         w = FileBindingsInput(cur, self)
         w.exec_()
         if w.entries_values != cur and w.validated:
@@ -613,7 +658,7 @@ file_path = kwargs["path"]"""
     def apply_method(self):
         
         action = self.actions_combo.currentText().lower().replace(' ', '_')
-        cur_binding = self.file_bindins_combo.currentText()
+        cur_binding = self.file_bindings_combo.currentText()
         methods = self.methods.get(cur_binding)
         cur_method = self.methods_combo.currentText()
 
@@ -630,6 +675,16 @@ file_path = kwargs["path"]"""
         self.assigned_method_name.setText("Assigned Method: " + cur_method)
         self.toggle_unsaved_changes()
 
+    def update_selected_binding(self):
+
+        
+        cur_binding = self.file_bindings_combo.currentText()
+        if cur_binding == "Create" and not self.creating_binding:
+
+            self.creating_binding = True
+            r = self.create_file_binding()
+            self.creating_binding = False
+    
     def update_selected_method(self):
 
         if self.creating_new_method: return
@@ -670,9 +725,10 @@ file_path = kwargs["path"]"""
 
     def update_selected_action(self):
 
-        cur_binding = self.file_bindins_combo.currentText()
+        cur_binding = self.file_bindings_combo.currentText()
         cur_act = self.actions_combo.currentText().replace(' ', '_').lower()
         methods = self.methods.get(cur_binding)
+
         cur_meth = methods.get(cur_act)
 
         if cur_act == "on_icon_clicked":
@@ -687,6 +743,27 @@ file_path = kwargs["path"]"""
                 self.assigned_method_name.setText("Assigned Method: " + cur_meth)
             else:
                 self.assigned_method_name.setText("Assigned Method: None")
+
+    def delete_files_binding(self):
+
+        cur = self.file_bindings_combo.currentText()
+
+        r = QtWidgets.QMessageBox.question(self, "Confirm",
+                                           "Delete files binding: " + cur + " ?")
+        if r == QtWidgets.QMessageBox.No: return
+
+        files = cur.replace(' ','').split(',')
+        cur_bin = [b for b in self.plugin_infos.bindings if b.files == files]
+        if cur_bin:
+            cur_bin = cur_bin[0]
+            self.plugin_infos.bindings.pop(self.plugin_infos.bindings.index(cur_bin))
+
+        if cur in self.methods.keys():
+            del self.methods[cur]
+
+        idx = self.file_bindings_combo.findText(cur)
+        self.file_bindings_combo.removeItem(idx)
+        self.toggle_unsaved_changes()
 
     def delete_method(self):
 
