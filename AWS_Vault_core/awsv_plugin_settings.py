@@ -204,6 +204,18 @@ class PluginSettings():
 
         return plugin_data
 
+    def remove_plugin(self, plugin_name):
+
+        plug = [p for p in self.setting_data["plugins"] if \
+                p["plugin_name"] == plugin_name]
+        if not plug: return
+
+        plug = plug[0]
+        self.setting_data["plugins"].pop(self.setting_data["plugins"].index(plug))
+
+        with open(plugin_settings, 'w') as f:
+            json.dump(self.setting_data, f, indent=4)
+
     def add_plugin(self, plugin_name):
 
         uid = self._generate_uuid()

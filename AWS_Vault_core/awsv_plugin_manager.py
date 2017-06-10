@@ -117,13 +117,14 @@ class PluginEntries(QtWidgets.QWidget):
         add_cur_exe_btn.clicked.connect(self.add_cur_exec)
         main_layout.addWidget(add_cur_exe_btn)
 
-        rename_fam_btn = QtWidgets.QPushButton("")
-        rename_fam_btn.setFixedHeight(32)
-        rename_fam_btn.setFixedWidth(32)
-        rename_fam_btn.setIcon(QtGui.QIcon(ICONS + "edit.svg"))
-        rename_fam_btn.setIconSize(QtCore.QSize(25, 25))
-        rename_fam_btn.setToolTip("Rename selected familly")
-        main_layout.addWidget(rename_fam_btn)
+        remove_plugin_btn = QtWidgets.QPushButton("")
+        remove_plugin_btn.setFixedHeight(32)
+        remove_plugin_btn.setFixedWidth(32)
+        remove_plugin_btn.setIcon(QtGui.QIcon(ICONS + "close.svg"))
+        remove_plugin_btn.setIconSize(QtCore.QSize(25, 25))
+        remove_plugin_btn.setToolTip("Remove selected plugin")
+        remove_plugin_btn.clicked.connect(self.remove_plugin)
+        main_layout.addWidget(remove_plugin_btn)
 
         main_layout.setContentsMargins(0,0,0,0)
         self.setLayout(main_layout)
@@ -132,6 +133,19 @@ class PluginEntries(QtWidgets.QWidget):
         self.update_selected_plugin()
 
         self.selected_familly = self.plugins_combo.currentText()
+
+    def remove_plugin(self):
+
+        cur = self.plugins_combo.currentText()
+
+        r = QtWidgets.QMessageBox.question(self, "Confirm",
+                                           "Remove plugin {} ? This can't be undo.".format(cur))
+        if r == QtWidgets.QMessageBox.No:
+            return
+
+        self.plugin_manager.remove_plugin(cur)
+        idx = self.plugins_combo.findText(cur)
+        self.plugins_combo.removeItem(idx)
 
     def update_selected_plugin(self):
 
@@ -957,6 +971,15 @@ class PluginManager(QtWidgets.QMainWindow):
         cw.setLayout(main_layout)
         self.setCentralWidget(cw)
 
+    def remove_plugin(self, plugin_name):
+
+        self.plugin_settings.remove_plugin(plugin_name)
+
+        self.plugin_settings.read_settings()
+        self.plugin_entries.plugins = self.plugin_settings.plugins
+        script = PLUGINS_FOLDER + plugin_name + ".py"
+        os.remove(script)
+
     def add_plugin(self, plugin_name):
         
         script = PLUGINS_FOLDER + plugin_name + ".py"
@@ -985,7 +1008,8 @@ def example_method(**kwargs):
         infos = self.plugin_settings.add_plugin(plugin_name)
         self.plugin_settings.read_settings()
         self.plugin_entries.plugins = self.plugin_settings.plugins
-        p = awsv_plugin_settings.PluginSettingInfo(infos, self)
+        p = awsv_plugin_settings.PluginSettingInfo(infos,
+                                                   self.plugin_settings)
         self.display_file_infos(plugin_name, p)
 
     def display_file_infos(self, name, infos):
