@@ -79,6 +79,20 @@ class MethodListModel(QtCore.QAbstractListModel):
         self.endRemoveRows()
         return True
 
+class ExecutablesEntry(QtWidgets.QLineEdit):
+
+    outsgn = QtCore.Signal(str)
+
+    def __init__(self, parent=None):
+        return super(ExecutablesEntry, self).__init__(parent=parent)
+
+    def keyPressEvent(self, e):
+
+        if e.key() == QtCore.Qt.Key_Enter or e.key() == QtCore.Qt.Key_Return:
+            self.outsgn.emit(self.text())
+
+        return super(ExecutablesEntry, self).keyPressEvent(e)
+
 class PluginEntries(QtWidgets.QWidget):
 
     def __init__(self, plugin_settings, parent=None):
@@ -98,6 +112,7 @@ class PluginEntries(QtWidgets.QWidget):
         main_layout.addWidget(QtWidgets.QLabel("Plugin: "))
 
         self._adding_item = False
+        self._removing_plugin = False
         self.plugins_combo = QtWidgets.QComboBox()
         self.plugins_combo.addItems(self.plugin_names)
         self.plugins_combo.addItem(QtGui.QIcon(ICONS + "add.svg"), "Create")
@@ -105,7 +120,8 @@ class PluginEntries(QtWidgets.QWidget):
         main_layout.addWidget(self.plugins_combo)
 
         main_layout.addWidget(QtWidgets.QLabel("Executable(s):"))
-        self.p_fam_executables = QtWidgets.QLineEdit()
+        self.p_fam_executables = ExecutablesEntry()
+        self.p_fam_executables.outsgn.connect(self.update_executable)
         main_layout.addWidget(self.p_fam_executables)
 
         add_cur_exe_btn = QtWidgets.QPushButton("")
@@ -134,6 +150,15 @@ class PluginEntries(QtWidgets.QWidget):
 
         self.selected_familly = self.plugins_combo.currentText()
 
+    def update_executable(self, entry):
+        
+        cur_plugin = self.plugins_combo.currentText()
+        cur_items = entry.replace(' ', '').split(',')
+
+        plug_inf = self.plugin_manager.plugins[cur_plugin]
+        plug_inf.plugin_infos.software_executable = cur_items
+        plug_inf.toggle_unsaved_changes()
+
     def remove_plugin(self):
 
         cur = self.plugins_combo.currentText()
@@ -143,15 +168,18 @@ class PluginEntries(QtWidgets.QWidget):
         if r == QtWidgets.QMessageBox.No:
             return
 
+        self._removing_plugin = True
         self.plugin_manager.remove_plugin(cur)
         idx = self.plugins_combo.findText(cur)
         self.plugins_combo.removeItem(idx)
+        self.plugins_combo.setCurrentIndex(0)
+        self._removing_plugin = False
 
     def update_selected_plugin(self):
 
         if self._adding_item: return
 
-        if self.plugins_combo.currentText() == "Create":
+        if self.plugins_combo.currentText() == "Create" and not self._removing_plugin:
 
             plug_name, ok = QtWidgets.QInputDialog.getText(self, 'Enter Name', 'Enter plugin name')
             if ok:
