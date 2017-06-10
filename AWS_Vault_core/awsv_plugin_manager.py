@@ -102,6 +102,7 @@ class PluginEntries(QtWidgets.QWidget):
 
         self.plugin_settings = plugin_settings
         self.plugins = self.plugin_settings.plugins
+        self.selected_plugin = ""
 
         self.setProperty("houdiniStyle", True)
         self.plugin_names = [n.get_plugin_name() for n in self.plugins]
@@ -146,9 +147,8 @@ class PluginEntries(QtWidgets.QWidget):
         self.setLayout(main_layout)
 
         self.plugins_combo.currentIndexChanged.connect(self.update_selected_plugin)
+        self.selected_plugin = self.plugins_combo.currentText()
         self.update_selected_plugin()
-
-        self.selected_familly = self.plugins_combo.currentText()
 
     def update_executable(self, entry):
         
@@ -178,6 +178,21 @@ class PluginEntries(QtWidgets.QWidget):
     def update_selected_plugin(self):
 
         if self._adding_item: return
+        
+        plug = self.plugin_manager.plugins.get(self.selected_plugin)
+        if plug and plug.unsaved_changes:
+            
+            ask = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning,
+                                        "Unsaved changes",
+                                        "Save changes on plugin: '{}' before switching to another pluging ?".format(self.selected_plugin),
+                                        parent=self)
+            ask.addButton("Yes, save changes", QtWidgets.QMessageBox.YesRole)
+            ask.addButton("No, discard changes", QtWidgets.QMessageBox.NoRole)
+            ask.addButton("Cancel", QtWidgets.QMessageBox.RejectRole)
+
+            r = ask.exec_()
+            if r == 2: return
+            if r == 0: plug.save_plugin(ask=False)
 
         if self.plugins_combo.currentText() == "Create" and not self._removing_plugin:
 
@@ -190,16 +205,16 @@ class PluginEntries(QtWidgets.QWidget):
                 self.p_fam_executables.setText("")
                 self.plugin_manager.add_plugin(plug_name)
                 self.plugins_combo.setCurrentText(plug_name)
-                self.selected_familly = plug_name
+                self.selected_plugin = plug_name
             else:
-                self.plugins_combo.setCurrentText(self.selected_familly)
+                self.plugins_combo.setCurrentText(self.selected_plugin)
 
             self._adding_item = False
             return
 
         cur = self.plugins_combo.currentText()
         if cur == "Create":
-            cur = self.selected_familly
+            cur = self.selected_plugin
 
         selected_plugin = [n for n in self.plugins \
             if n.get_plugin_name() == cur][0]
@@ -207,7 +222,7 @@ class PluginEntries(QtWidgets.QWidget):
         selected_fam_exec = selected_plugin.get_plugin_exe()
 
         self.p_fam_executables.setText(', '.join(selected_fam_exec))
-        self.selected_familly = self.plugins_combo.currentText()
+        self.selected_plugin = self.plugins_combo.currentText()
         
         # display selected plugin in plugin manager
         self.plugin_manager.display_file_infos(self.plugins_combo.currentText(),
@@ -570,14 +585,6 @@ class PluginInfos(QtWidgets.QWidget):
         self.methods_combo = QtWidgets.QComboBox()
         methods_lay.addWidget(self.methods_combo)
         self.methods_combo.setModel(self.method_list)
-
-        edit_methodname_btn = QtWidgets.QPushButton("")
-        edit_methodname_btn.setFixedHeight(32)
-        edit_methodname_btn.setFixedWidth(32)
-        edit_methodname_btn.setIcon(QtGui.QIcon(ICONS + "edit.svg"))
-        edit_methodname_btn.setIconSize(QtCore.QSize(25, 25))
-        edit_methodname_btn.setToolTip("Edit method name")
-        methods_lay.addWidget(edit_methodname_btn)
 
         apply_method_btn = QtWidgets.QPushButton("")
         apply_method_btn.setFixedHeight(32)
@@ -953,13 +960,14 @@ file_path = kwargs["path"]"""
 
             self.code_editor.unsaved_changes = False
 
-    def save_plugin(self):
+    def save_plugin(self, ask=True):
 
-        msg = "Save plugin: " + self.plugin_infos.plugin_name + " ?"
-        r = QtWidgets.QMessageBox.information(self,
-                                              "Confirm", msg,
-                                              "Yes", "Cancel")
-        if r == 1: return
+        if ask:
+            msg = "Save plugin: " + self.plugin_infos.plugin_name + " ?"
+            r = QtWidgets.QMessageBox.information(self,
+                                                  "Confirm", msg,
+                                                  "Yes", "Cancel")
+            if r == 1: return
 
         self.plugin_infos.plugin_settings.save(self.plugin_infos.plugin_name)
         QtWidgets.QMessageBox.information(self, "Info", "Plugin saved !")
