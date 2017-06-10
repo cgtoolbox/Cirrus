@@ -1059,4 +1059,9 @@ def example_method(**kwargs):
             self.plugin_infos_layout.addWidget(p)
         else:
             self.plugins[name].setVisible(True)
+
+    def closeEvent(self, e):
+
+        awsv_plugin_parser.get_plugin()
+        super(PluginManager, self).closeEvent(e)
             
