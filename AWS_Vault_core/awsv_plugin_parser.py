@@ -6,6 +6,8 @@ import uuid
 import logging
 from AWS_Vault_core.awsv_logger import Logger
 from AWS_Vault_core.awsv_plugin_errors import *
+from AWS_Vault_core.awsv_io import get_object_key
+from AWS_Vault_core.awsv_connection import ConnectionInfos
 
 from PySide2 import QtWidgets
 
@@ -60,7 +62,9 @@ class Plugin(object):
 
         m = getattr(self._module, self._on_get, None)
         if m:
-            return m(path=kwargs["path"])
+            return m(path=kwargs["path"],
+                     cloud_path=get_object_key(kwargs["path"]),
+                     local_root=ConnectionInfos.get("local_root")[0:-1])
 
         Logger.Log.warn("Plugin failed, module {} doesn't have method {}".format(self._module, self._on_get))
         return None
@@ -72,7 +76,9 @@ class Plugin(object):
 
         m = getattr(self._module, self._on_save, None)
         if m:
-            return m(args, kwargs)
+            return m(path=kwargs["path"],
+                     cloud_path=get_object_key(kwargs["path"]),
+                     local_root=ConnectionInfos.get("local_root")[0:-1])
 
         Logger.Log.warn("Plugin failed, module {} doesn't have method {}".format(self._module, self._on_save))
         return None
@@ -84,7 +90,9 @@ class Plugin(object):
 
         m = getattr(self._module, self._on_lock, None)
         if m:
-            return m(args, kwargs)
+            return m(path=kwargs["path"],
+                     cloud_path=get_object_key(kwargs["path"]),
+                     local_root=ConnectionInfos.get("local_root")[0:-1])
 
         Logger.Log.warn("Plugin failed, module {} doesn't have method {}".format(self._module, self._on_lock))
         return None

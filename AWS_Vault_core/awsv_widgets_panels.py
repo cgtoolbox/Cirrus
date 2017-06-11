@@ -432,6 +432,9 @@ class PanelFileButtons(QtWidgets.QWidget):
             self.lock_button.setIcon(QtGui.QIcon(ICONS + "notlocked.png"))
             self.lock_button.setToolTip("File not locked")
 
+        if self.panelfile.plugin:
+            self.panelfile.plugin.exec_on_lock(path=self.local_file_path)
+
     def open_versions(self):
 
         self.w = awsv_versions_getter.VersionPicker(self.local_file_path,
@@ -590,7 +593,10 @@ class PanelFile(PanelFolder):
 
         # check if a plugin is loaded, if yes, execute the "on_get" method of the plugin
         if self.plugin:
-            self.plugin.exec_on_get(path=self.local_file_path)
+            if mode == 0:
+                self.plugin.exec_on_save(path=self.local_file_path)
+            else:
+                self.plugin.exec_on_get(path=self.local_file_path)
 
     def get_from_cloud(self, version_id=""):
 
