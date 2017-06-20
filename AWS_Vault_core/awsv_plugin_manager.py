@@ -278,8 +278,10 @@ class OnIconMenuEntries(QtWidgets.QFrame):
 
     def __init__(self, model, parent=None):
         super(OnIconMenuEntries, self).__init__(parent=parent)
-        self.entries = {}
+        
+        self.entries = []
         self.model = model
+        self.top_ui = parent
 
         self.setFrameStyle(QtWidgets.QFrame.Panel | QtWidgets.QFrame.Raised)
         self.setLineWidth(1)
@@ -298,6 +300,23 @@ class OnIconMenuEntries(QtWidgets.QFrame):
 
         self.setLayout(main_layout)
 
+    def refresh_menu(self):
+
+        binding = self.top_ui.get_selected_binding()
+        binding.methods.on_icon_clicked = self.get_data_tree()
+        self.top_ui.toggle_unsaved_changes()
+
+    def get_data_tree(self):
+
+        out = {}
+        for ent in self.entries:
+
+            name, meth = ent.get_data()
+            if name.strip() == "": continue
+            out[meth] = name
+
+        return out
+
     def remove_entry(self, w):
 
         w_name = w.name
@@ -305,21 +324,20 @@ class OnIconMenuEntries(QtWidgets.QFrame):
         self.entries_layout.removeWidget(w)
         w.setParent(None)
         w.deleteLater()
-        if w_name in self.entries.keys():
-            del self.entries[w_name]
+        if w in self.entries:
+            self.entries.remove(w)
 
-    def append_entry(self, method="", name=""):
-
-        if name in self.entries.keys():
-            return
-
+    def append_entry(self, method="", name="", toggle_unsaved=True):
+        
         w = _OnIconMenuEntry(name=name,
                              model=self.model,
                              method=method,
                              parent=self)
         self.entries_layout.addWidget(w)
-        if name != "":
-            self.entries[name] = w
+        self.entries.append(w)
+
+        if toggle_unsaved:
+            self.top_ui.toggle_unsaved_changes()
 
 class _OnIconMenuEntry(QtWidgets.QWidget):
 
@@ -334,6 +352,7 @@ class _OnIconMenuEntry(QtWidgets.QWidget):
 
         self.name_input = QtWidgets.QLineEdit(name)
         self.name_input.setStyleSheet("background-color: transparent")
+        self.name_input.textChanged.connect(self.refresh_menu_data)
         main_layout.addWidget(self.name_input)
 
         a =QtWidgets.QLabel("")
@@ -342,6 +361,8 @@ class _OnIconMenuEntry(QtWidgets.QWidget):
 
         self.method_input = QtWidgets.QComboBox()
         self.method_input.setModel(model)
+        self.method_input.setCurrentText(method)
+        self.method_input.currentIndexChanged.connect(self.refresh_menu_data)
         main_layout.addWidget(self.method_input)
 
         del_btn = QtWidgets.QPushButton("")
@@ -355,6 +376,15 @@ class _OnIconMenuEntry(QtWidgets.QWidget):
 
         main_layout.setContentsMargins(0,0,0,0)
         self.setLayout(main_layout)
+
+    def refresh_menu_data(self):
+
+        self.top_ui.refresh_menu()
+
+    def get_data(self):
+
+        return [self.name_input.text(),
+                self.method_input.currentText()]
 
     def remove_me(self):
 
@@ -512,8 +542,9 @@ class PluginInfos(QtWidgets.QWidget):
         if r:
             for files, uid in r:
                 self.bindings[', '.join(files)] = uid
-                self.methods[', '.join(files)] = self.plugin_infos.get("methods", level="bindings", uid=uid)
-
+                self.methods[', '.join(files)] = self.plugin_infos.get("methods",
+                                                                       level="bindings",
+                                                                       uid=uid)
         # methods available data
         li = []
         if self.script_code:
@@ -574,9 +605,23 @@ class PluginInfos(QtWidgets.QWidget):
         self.assigned_method_name = QtWidgets.QLabel("Assigned Method: None")
         self.main_layout.addWidget(self.assigned_method_name)
 
-        self.menu_entries = OnIconMenuEntries(self.method_list, parent=self)
-        self.menu_entries.setVisible(False)
-        self.main_layout.addWidget(self.menu_entries)
+        # init first menu entries for current binding
+        self.menu_entries_lay = QtWidgets.QVBoxLayout()
+        self.menu_entries_lay.setAlignment(QtCore.Qt.AlignTop)
+        self.menu_entries_lay.setContentsMargins(0,0,0,0)
+        self.menu_entries_dict = {}
+        menu_entries = OnIconMenuEntries(self.method_list, parent=self)
+        menu_entries.setVisible(False)
+        cur_binding = self.file_bindings_combo.currentText()
+        methods = self.methods.get(cur_binding)
+        cur_meth = methods.get("on_icon_clicked")
+        if cur_meth:
+            for k, v in cur_meth.iteritems():
+                menu_entries.append_entry(k, v, False)
+
+        self.menu_entries_dict[self.file_bindings_combo.currentText()] = menu_entries
+        self.menu_entries_lay.addWidget(menu_entries)
+        self.main_layout.addLayout(self.menu_entries_lay)
 
         methods_lay = QtWidgets.QHBoxLayout()
         methods_lay.setAlignment(QtCore.Qt.AlignLeft)
@@ -725,7 +770,6 @@ file_path = kwargs["path"]"""
         self.toggle_unsaved_changes()
 
     def update_selected_binding(self):
-
         
         cur_binding = self.file_bindings_combo.currentText()
         if cur_binding == "Create" and not self.creating_binding:
@@ -733,6 +777,8 @@ file_path = kwargs["path"]"""
             self.creating_binding = True
             r = self.create_file_binding()
             self.creating_binding = False
+
+        self.update_selected_action()
     
     def update_selected_method(self):
 
@@ -781,17 +827,32 @@ file_path = kwargs["path"]"""
         cur_meth = methods.get(cur_act)
 
         if cur_act == "on_icon_clicked":
-            self.menu_entries.setVisible(True)
+
             self.assigned_method_name.setText("Assigned Method: Menu")
-            if cur_meth:
-                for k, v in cur_meth.iteritems():
-                    self.menu_entries.append_entry(k, v)
+
+            for me in self.menu_entries_dict.itervalues():
+                me.setVisible(False)
+
+            menu = self.menu_entries_dict.get(cur_binding)
+            if menu is not None:
+                menu.setVisible(True)
+            else:
+                w = OnIconMenuEntries(self.method_list, parent=self)
+                if cur_meth:
+                    for k, v in cur_meth.iteritems():
+                        w.append_entry(k, v, False)
+                self.menu_entries_dict[cur_binding] = w
+                self.menu_entries_lay.addWidget(w)
+                w.setVisible(True)
         else:
-            self.menu_entries.setVisible(False)
+            for me in self.menu_entries_dict.itervalues():
+                me.setVisible(False)
             if cur_meth:
                 self.assigned_method_name.setText("Assigned Method: " + cur_meth)
             else:
                 self.assigned_method_name.setText("Assigned Method: None")
+
+        self.update_selected_method()
 
     def delete_files_binding(self):
 
@@ -812,6 +873,13 @@ file_path = kwargs["path"]"""
 
         idx = self.file_bindings_combo.findText(cur)
         self.file_bindings_combo.removeItem(idx)
+
+        menu = self.menu_entries_dict.get(cur)
+        if menu:
+            self.menu_entries_lay.removeWidget(menu)
+            menu.setParent(None)
+            menu.deleteLater()
+
         self.toggle_unsaved_changes()
 
     def delete_method(self):
@@ -980,6 +1048,13 @@ file_path = kwargs["path"]"""
             self.plugin_manager.setWindowTitle("Plugin Manager (unsaved changes)")
         else:
             self.plugin_manager.setWindowTitle("Plugin Manager")
+
+    def get_selected_binding(self):
+
+        cur_binding = self.file_bindings_combo.currentText()
+        uid = self.bindings.get(cur_binding)
+        r = self.plugin_infos.get_bindings(uid = uid)
+        return r
 
 class PluginManager(QtWidgets.QMainWindow):
 
