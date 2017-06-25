@@ -333,10 +333,12 @@ class PanelFileButtons(QtWidgets.QWidget):
         lock_user = metadata.get("user", "")
         lock_message = metadata.get("lock_message", "No message")
         lock_time = metadata.get("lock_time", "No Timestamp")
+
         if lock_user == "":
             self.is_locked = awsv_objects.FileLockState.UNLOCKED
             self.lock_button.setIcon(QtGui.QIcon(ICONS + "notlocked.png"))
             self.lock_button.setToolTip("File not locked")
+
         elif lock_user == awsv_objects.ObjectMetadata.get_user_uid():
             self.is_locked = awsv_objects.FileLockState.SELF_LOCKED
             self.lock_button.setIcon(QtGui.QIcon(ICONS + "lock_self.png"))
@@ -781,6 +783,12 @@ class Panel(QtWidgets.QFrame):
         self.fetcher.signals.end.connect(self.element_fetching_end)
         QtCore.QThreadPool.globalInstance().start(self.fetcher)
         
+    def refresh_plugin(self):
+        
+        Logger.Log.debug("Refreshing plugins for folder id: " + str(self.cur_folder_id))
+        for n in [w for w in self.elements if isinstance(w, PanelFile)]:
+            n.init_plugin()
+
     def add_element(self, f):
 
         file_name = f.split('/')[-1]

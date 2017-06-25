@@ -327,6 +327,9 @@ class OnIconMenuEntries(QtWidgets.QFrame):
         if w in self.entries:
             self.entries.remove(w)
 
+        self.top_ui.toggle_unsaved_changes()
+        self.refresh_menu()
+
     def append_entry(self, method="", name="", toggle_unsaved=True):
         
         w = _OnIconMenuEntry(name=name,
@@ -337,6 +340,7 @@ class OnIconMenuEntries(QtWidgets.QFrame):
         self.entries.append(w)
 
         if toggle_unsaved:
+            self.refresh_menu()
             self.top_ui.toggle_unsaved_changes()
 
 class _OnIconMenuEntry(QtWidgets.QWidget):
@@ -382,7 +386,7 @@ class _OnIconMenuEntry(QtWidgets.QWidget):
         self.top_ui.refresh_menu()
 
     def get_data(self):
-
+        
         return [self.name_input.text(),
                 self.method_input.currentText()]
 
@@ -1061,13 +1065,15 @@ class PluginManager(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         super(PluginManager, self).__init__(parent=parent)
 
+        self.main_ui = parent
+
         self.setProperty("houdiniStyle", True)
         self.setWindowTitle("Plugin Manager")
         self.setWindowIcon(QtGui.QIcon(ICONS + "plugin.svg"))
 
         self.plugins = {}
 
-        self.plugin_settings = awsv_plugin_settings.PluginSettings()
+        self.plugin_settings = awsv_plugin_settings.PluginSettings(plugin_manager=self)
 
         cw = QtWidgets.QWidget()
         main_layout = QtWidgets.QVBoxLayout()
@@ -1081,6 +1087,10 @@ class PluginManager(QtWidgets.QMainWindow):
 
         cw.setLayout(main_layout)
         self.setCentralWidget(cw)
+
+    def refresh_plugins(self):
+
+        self.main_ui.refresh_plugins()
 
     def remove_plugin(self, plugin_name):
 

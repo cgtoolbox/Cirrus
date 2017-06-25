@@ -118,14 +118,6 @@ class PluginSettingInfo():
         data["bindings"] = [b.get_date_tree() for b in self.bindings]
         return data
 
-    def save(self):
-        # save the current plugin data to the plugin_settings.json
-        
-        with open(plugin_settings) as data:
-            plugin_data = json.load(data)
-
-        return
-
 class _PluginFileBindings():
 
     def __init__(self, inf={}, settings=None):
@@ -186,8 +178,9 @@ class PluginSettings():
         optional plugin_name => can be used when level is left blank, to get data from a specific plugin.
         
     """
-    def __init__(self):
+    def __init__(self, plugin_manager=None):
 
+        self.plugin_manager = plugin_manager
         self.setting_data = None
         self.plugins = []
         self.read_settings()
@@ -201,7 +194,6 @@ class PluginSettings():
 
         for p in self.setting_data["plugins"]:
             self.plugins.append(PluginSettingInfo(p, self))
-
         return plugin_data
 
     def remove_plugin(self, plugin_name):
@@ -284,3 +276,6 @@ class PluginSettings():
 
         # refresh plugins
         awsv_plugin_parser.get_plugin()
+
+        # refresh plugin in panels
+        self.plugin_manager.refresh_plugins()

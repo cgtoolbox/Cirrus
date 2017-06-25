@@ -21,6 +21,8 @@ def preview_bgeo(**kwargs):
     import subprocess
     path = kwargs["path"]
     subprocess.Popen(["gplay", path])
+    print kwargs
+    
     
 def reload_geo(**kwargs):
     
@@ -31,3 +33,29 @@ def reload_geo(**kwargs):
         parm = f.parm("file")
         if parm.eval() == path:
             f.parm("reload").pressButton()
+
+
+def test(**kwargs):
+
+    # Write your method code here
+    # A 'kwargs' dict is available with these entries:
+    # kwargs["path"] => local file path
+    # kwargs["cloud_path"] => file path on the cloud
+    # kwargs["local_root"] => the current project's root folder
+    import hou
+    file_path = kwargs["path"]
+    print kwargs
+    
+
+
+def open_hipfile(**kwargs):
+
+    # Write your method code here
+    # A 'kwargs' dict is available with these entries:
+    # kwargs["path"] => local file path
+    # kwargs["cloud_path"] => file path on the cloud
+    # kwargs["local_root"] => the current project's root folder
+    import hou
+    file_path = kwargs["path"]
+    hou.hipFile.load(file_path)
+    

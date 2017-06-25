@@ -323,14 +323,11 @@ class MainWidget(QtWidgets.QFrame):
         self.close_proj_act = QtWidgets.QAction("Close Project", self)
         self.close_proj_act.setIcon(QtGui.QIcon(ICONS + "close.svg"))
         self.close_proj_act.triggered.connect(self.close_project)
-        self.create_proj_act = QtWidgets.QAction("Create new project", self)
-        self.create_proj_act.setIcon(QtGui.QIcon(ICONS + "add.svg"))
         self.download_proj_act = QtWidgets.QAction("Download a project", self)
         self.download_proj_act.triggered.connect(self.get_project)
         self.download_proj_act.setIcon(QtGui.QIcon(ICONS + "inbox.svg"))
         self.file_menu.addAction(self.open_proj_act)
         self.file_menu.addAction(self.close_proj_act)
-        self.file_menu.addAction(self.create_proj_act)
         self.file_menu.addAction(self.download_proj_act)
         self.options_menu = self.main_menu.addMenu("Options")
         self.auto_check_state_act = QtWidgets.QAction("Auto Check Files State", self)
@@ -341,6 +338,10 @@ class MainWidget(QtWidgets.QFrame):
         self.open_plug_manager_act.setIcon(QtGui.QIcon(ICONS + "plugin.svg"))
         self.open_plug_manager_act.triggered.connect(self.open_plugin_manager)
         self.options_menu.addAction(self.open_plug_manager_act)
+        self.refresh_plugins_act = QtWidgets.QAction("Refresh Plugins", self)
+        self.refresh_plugins_act.setIcon(QtGui.QIcon(ICONS + "reload.svg"))
+        self.refresh_plugins_act.triggered.connect(self.refresh_plugins)
+        self.options_menu.addAction(self.refresh_plugins_act)
         
         self.main_layout.addWidget(self.main_menu)
 
@@ -353,6 +354,11 @@ class MainWidget(QtWidgets.QFrame):
 
         self.plug_manager_w = awsv_plugin_manager.PluginManager(self)
         self.plug_manager_w.show()
+
+    def refresh_plugins(self):
+
+        for p in self.panels.itervalues():
+            p.refresh_plugin()
 
     def close_project(self):
 
@@ -370,6 +376,7 @@ class MainWidget(QtWidgets.QFrame):
         self.pathbar.deleteLater()
 
         self.cur_panel = None
+        self.panels = {}
 
         self.init_button.setVisible(True)
 
