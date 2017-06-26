@@ -415,7 +415,7 @@ class MethodDeletionWarning(QtWidgets.QDialog):
 
         warning_layout = QtWidgets.QVBoxLayout()
         warning_layout.setAlignment(QtCore.Qt.AlignTop)
-        warning_layout.addWidget(QtWidgets.QLabel("One or more bindings use this method !"))
+        warning_layout.addWidget(QtWidgets.QLabel("One or more bindings use this method ! Delete the method anyway ?"))
         warning_layout.addWidget(QtWidgets.QLabel("Binding(s) involved:"))
 
         for k, v in data.iteritems():
@@ -976,9 +976,13 @@ file_path = kwargs["path"]"""
         
         with open(script_file, 'w') as f:
             f.writelines(code)
+        
+        m = self.methods_combo.model()
+        m.removeRows(0, value=selected_method)
 
-        j = self.methods_combo.findText(selected_method)
-        self.methods_combo.removeItem(j)
+        self.methods_combo.setCurrentIndex(0)
+        self.update_selected_action()
+        self.update_selected_method()
 
     def save_method_code(self, selected_method=None, ask=True):
 
