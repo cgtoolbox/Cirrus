@@ -636,9 +636,10 @@ class PanelFile(PanelFolder):
 
     def save_to_cloud(self):
 
-        if not self.file_buttons.is_locked == awsv_objects.FileLockState.SELF_LOCKED:
-            QtWidgets.QMessageBox.warning(self, "Error", "Can't save object to cloud, you have to lock the file first")
-            return
+        if not self.file_buttons.state == awsv_objects.FileState.LOCAL_ONLY:
+            if not self.file_buttons.is_locked == awsv_objects.FileLockState.SELF_LOCKED:
+                QtWidgets.QMessageBox.warning(self, "Error", "Can't save object to cloud, you have to lock the file first")
+                return
 
         if not os.path.exists(self.local_file_path):
             QtWidgets.QMessageBox.critical(self, "Error", "File not found: " + self.local_file_path)

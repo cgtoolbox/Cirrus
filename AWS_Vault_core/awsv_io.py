@@ -541,10 +541,11 @@ def refresh_state(object_path=""):
                 file_state = awsv_objects.FileState.CLOUD_AND_LOCAL_NOT_LATEST
 
         else:
-            if not local_metatada:
-                file_state = awsv_objects.FileState.METADATA_DESYNC
-            else:
+            if not is_on_cloud:
                 file_state = awsv_objects.FileState.LOCAL_ONLY
+
+            if not local_metatada and is_on_cloud:
+                file_state = awsv_objects.FileState.METADATA_DESYNC
     else:
         file_state = awsv_objects.FileState.CLOUD_ONLY
 
