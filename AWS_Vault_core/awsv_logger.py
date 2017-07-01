@@ -1,5 +1,4 @@
 import os
-import sys
 import logging
 from logging.handlers import RotatingFileHandler
 from AWS_Vault_core import awsv_config

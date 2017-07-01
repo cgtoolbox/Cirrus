@@ -65,4 +65,4 @@ def launch_standalone(args):
 
 if __name__ == "__main__":
     
-    launch_standalone()
+    launch_standalone([])

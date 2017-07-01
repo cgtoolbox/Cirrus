@@ -1,14 +1,11 @@
 import os
 import sys
-import datetime
-import time
 import tempfile
 from AWS_Vault_core.awsv_logger import Logger
-
 from PySide2 import QtGui
 from PySide2 import QtWidgets
 from PySide2 import QtCore
-
+import botocore
 from AWS_Vault_core import awsv_io
 reload(awsv_io)
 from AWS_Vault_core import awsv_threading
@@ -23,10 +20,8 @@ from AWS_Vault_core import awsv_widgets_panels as panels
 reload(panels)
 from AWS_Vault_core import awsv_plugin_parser
 reload(awsv_plugin_parser)
-
 from AWS_Vault_core import awsv_plugin_manager
 reload(awsv_plugin_manager)
-
 from AWS_Vault_core.awsv_connection import ConnectionInfos
 from AWS_Vault_core.awsv_connection import init_connection
 from AWS_Vault_core import awsv_io
@@ -35,10 +30,7 @@ reload(awsv_io)
 ICONS = os.path.dirname(__file__) + "\\icons\\"
 
 exe = sys.executable.split(os.sep)[-1].split('.')[0]
-if exe in ["hindie", "houdinicore", "hescape", "houdinifx"]:
-    IS_HOUDINI = True
-else:
-    IS_HOUDINI = False
+IS_HOUDINI = exe in ["hindie", "houdinicore", "hescape", "houdinifx"]
 
 class ProjectSelector(QtWidgets.QWidget):
 
@@ -307,6 +299,8 @@ class MainWidget(QtWidgets.QFrame):
         self.panels = {}
         self.cur_panel = None
         self.root_panel = None
+        self.plug_manager_w  = None
+        self.project_getter = None
 
         self.main_layout = QtWidgets.QVBoxLayout()
         self.main_layout.setSpacing(0)

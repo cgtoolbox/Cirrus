@@ -1,5 +1,3 @@
-from PySide2 import QtGui
-from PySide2 import QtCore
 from PySide2 import QtWidgets
 
 class MessageInput(QtWidgets.QDialog):

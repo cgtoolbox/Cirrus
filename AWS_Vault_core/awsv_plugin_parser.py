@@ -2,8 +2,6 @@ import json
 import os
 import sys
 import imp
-import uuid
-import logging
 from AWS_Vault_core.awsv_logger import Logger
 from AWS_Vault_core.awsv_plugin_errors import *
 from AWS_Vault_core.awsv_io import get_object_key
@@ -66,7 +64,8 @@ class Plugin(object):
                      cloud_path=get_object_key(kwargs["path"]),
                      local_root=ConnectionInfos.get("local_root")[0:-1])
 
-        Logger.Log.warn("Plugin failed, module {} doesn't have method {}".format(self._module, self._on_get))
+        Logger.Log.warn("Plugin failed, module {} doesn't have method {}".format(self._module,
+                                                                                 self._on_get))
         return None
 
     def exec_on_save(self, *args, **kwargs):
@@ -80,7 +79,8 @@ class Plugin(object):
                      cloud_path=get_object_key(kwargs["path"]),
                      local_root=ConnectionInfos.get("local_root")[0:-1])
 
-        Logger.Log.warn("Plugin failed, module {} doesn't have method {}".format(self._module, self._on_save))
+        Logger.Log.warn("Plugin failed, module {} doesn't have method {}".format(self._module,
+                                                                                 self._on_save))
         return None
 
     def exec_on_lock(self, *args, **kwargs):
@@ -94,7 +94,8 @@ class Plugin(object):
                      cloud_path=get_object_key(kwargs["path"]),
                      local_root=ConnectionInfos.get("local_root")[0:-1])
 
-        Logger.Log.warn("Plugin failed, module {} doesn't have method {}".format(self._module, self._on_lock))
+        Logger.Log.warn("Plugin failed, module {} doesn't have method {}".format(self._module,
+                                                                                 self._on_lock))
         return None
 
     def on_icon_clicked_menu(self, parent, **kwargs):

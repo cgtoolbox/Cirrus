@@ -1,9 +1,7 @@
 import json
 import os
 import sys
-import imp
 import uuid
-import logging
 from AWS_Vault_core.awsv_logger import Logger
 from AWS_Vault_core.awsv_plugin_errors import *
 from AWS_Vault_core import awsv_plugin_parser

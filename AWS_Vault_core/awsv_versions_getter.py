@@ -1,4 +1,3 @@
-import sys
 import os
 from AWS_Vault_core.awsv_logger import Logger
 

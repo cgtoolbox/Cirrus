@@ -1,8 +1,6 @@
 import os
 import sys
-import datetime
 import time
-import tempfile
 from AWS_Vault_core.awsv_logger import Logger
 
 from PySide2 import QtGui
@@ -23,17 +21,12 @@ from AWS_Vault_core import awsv_widgets_inputs
 reload(awsv_widgets_inputs)
 from AWS_Vault_core import awsv_plugin_parser
 reload(awsv_plugin_parser)
-
-from AWS_Vault_core.awsv_config import Config
 from AWS_Vault_core.awsv_connection import ConnectionInfos
 
 ICONS = os.path.dirname(__file__) + "\\icons\\"
 
 exe = sys.executable.split(os.sep)[-1].split('.')[0]
-if exe in ["hindie", "houdinicore", "hescape", "houdinifx"]:
-    IS_HOUDINI = True
-else:
-    IS_HOUDINI = False
+IS_HOUDINI = exe in ["hindie", "houdinicore", "hescape", "houdinifx"]
 
 class MetadataViewer(QtWidgets.QDialog):
 
@@ -232,6 +225,7 @@ class PanelFileButtons(QtWidgets.QWidget):
 
         self.panelfile = parent
         self.metadata = None
+        self.state_fetcher = None
         self.state = state
         self.local_file_path = self.panelfile.local_file_path
         self.is_locked = awsv_objects.FileLockState.UNLOCKED
@@ -439,11 +433,11 @@ class PanelFileButtons(QtWidgets.QWidget):
 
     def open_versions(self):
 
-        self.w = awsv_versions_getter.VersionPicker(self.local_file_path,
-                                                    parent=self)
-        self.w.exec_()
+        version_picker = awsv_versions_getter.VersionPicker(self.local_file_path,
+                                                            parent=self)
+        version_picker.exec_()
 
-        ver = self.w.version_selected
+        ver = version_picker.version_selected
         if not ver: return
 
         self.panelfile.get_from_cloud(version_id=ver)
@@ -457,6 +451,9 @@ class PanelFile(PanelFolder):
     def __init__(self, name="", path="", state=awsv_objects.FileState.NONE, parent=None):
 
         self.state = state
+        self.icon_menu = None
+        self.worker = None
+        self.plugin = None
         root = ConnectionInfos.get("local_root")
         
         self.local_file_path = root + path
@@ -646,7 +643,7 @@ class PanelFile(PanelFolder):
             return
         
         confirm_msg = "Send file: {0} on the cloud ?\nSize: {1:.2f} Mb".format(self.local_file_path,
-                                                                         self.local_file_size)
+                                                                               self.local_file_size)
         ask = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Question, "Confirm", confirm_msg,
                                     buttons = QtWidgets.QMessageBox.StandardButton.Yes|\
                                               QtWidgets.QMessageBox.StandardButton.No,
@@ -678,7 +675,7 @@ class PanelFile(PanelFolder):
         self.activity_progress.setMaximum(s)
 
         self.worker = awsv_threading.FileIOThread(self.local_file_path, message=msg,
-                                           keep_locked=keep_locked)
+                                                  keep_locked=keep_locked)
        
         self.worker.signals.start_sgn.connect(self.start_progress)
         self.worker.signals.end_sgn.connect(self.end_progress)
@@ -700,7 +697,7 @@ class Panel(QtWidgets.QFrame):
         self.setProperty("houdiniStyle", IS_HOUDINI)
         self.setObjectName("panel_" + panel_name)
         self.main_layout = QtWidgets.QVBoxLayout()
-        self.main_layout.setContentsMargins(0,0,0,0)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
         self.main_layout.setSpacing(0)
         self.main_layout.setAlignment(QtCore.Qt.AlignTop)
 
@@ -745,7 +742,7 @@ class Panel(QtWidgets.QFrame):
         self.elements_layout = QtWidgets.QVBoxLayout()
         self.elements_layout.setAlignment(QtCore.Qt.AlignTop)
         self.elements_layout.setSpacing(0)
-        self.elements_layout.setContentsMargins(0,0,0,0)
+        self.elements_layout.setContentsMargins(0, 0, 0, 0)
         self.elements_widget = QtWidgets.QWidget()
         self.elements_widget.setLayout(self.elements_layout)
         self.element_scroll.setWidget(self.elements_widget)

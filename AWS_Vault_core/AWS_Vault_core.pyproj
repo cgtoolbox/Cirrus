@@ -79,9 +79,6 @@
     <Compile Include="py_highlighter.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Test.py">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="__init__.py" />
   </ItemGroup>
   <ItemGroup>
@@ -92,6 +89,7 @@
     <Folder Include="plugins\" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include=".pylintrc" />
     <Content Include="plugins\plugin_settings.json" />
   </ItemGroup>
   <Import Project="$(PtvsTargetsFile)" Condition="Exists($(PtvsTargetsFile))" />

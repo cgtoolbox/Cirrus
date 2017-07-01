@@ -1,13 +1,12 @@
-import ConfigParser
-import os
-import sys
-
 """
     Configuration options singleton.
 """
 
+import ConfigParser
+import os
+
 def generate_config_file():
-        
+
     cfgfile_path = os.path.dirname(__file__) + os.sep + "config.ini"
     config = ConfigParser.ConfigParser()
     config.optionxform = str
@@ -34,8 +33,8 @@ def generate_config_file():
 
     return config
 
-class Config():
-    
+class Config(object):
+
     config = generate_config_file()
 
     @classmethod
@@ -49,10 +48,10 @@ class Config():
             return cls.config.getint(section, option)
         else:
             return cls.config.get(section, option)
-    
+
     @classmethod
     def set(cls, section, option, value):
-        
+
         cls.config.set(section, option, value)
 
         with open(cls.cfgfile_path, 'w') as cfgfile:

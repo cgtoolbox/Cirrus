@@ -17,7 +17,7 @@ reload(py_highlighter)
 
 from AWS_Vault_core.awsv_logger import Logger
 
-ICONS          = os.path.dirname(__file__) + "\\icons\\"
+ICONS = os.path.dirname(__file__) + "\\icons\\"
 PLUGINS_FOLDER = os.path.dirname(__file__) + "\\plugins\\"
 
 class MethodListModel(QtCore.QAbstractListModel):
@@ -84,7 +84,7 @@ class ExecutablesEntry(QtWidgets.QLineEdit):
     outsgn = QtCore.Signal(str)
 
     def __init__(self, parent=None):
-        return super(ExecutablesEntry, self).__init__(parent=parent)
+        super(ExecutablesEntry, self).__init__(parent=parent)
 
     def keyPressEvent(self, e):
 
@@ -143,7 +143,7 @@ class PluginEntries(QtWidgets.QWidget):
         remove_plugin_btn.clicked.connect(self.remove_plugin)
         main_layout.addWidget(remove_plugin_btn)
 
-        main_layout.setContentsMargins(0,0,0,0)
+        main_layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(main_layout)
 
         self.plugins_combo.currentIndexChanged.connect(self.update_selected_plugin)
@@ -184,19 +184,27 @@ class PluginEntries(QtWidgets.QWidget):
             
             ask = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning,
                                         "Unsaved changes",
-                                        "Save changes on plugin: '{}' before switching to another pluging ?".format(self.selected_plugin),
+                                        ("Save changes on plugin: '"
+                                         + self.selected_plugin
+                                         + "' before switching"
+                                         " to another pluging ?"),
                                         parent=self)
-            ask.addButton("Yes, save changes", QtWidgets.QMessageBox.YesRole)
-            ask.addButton("No, discard changes", QtWidgets.QMessageBox.NoRole)
+            ask.addButton("Yes, save changes",
+                          QtWidgets.QMessageBox.YesRole)
+            ask.addButton("No, discard changes",
+                          QtWidgets.QMessageBox.NoRole)
             ask.addButton("Cancel", QtWidgets.QMessageBox.RejectRole)
 
             r = ask.exec_()
             if r == 2: return
             if r == 0: plug.save_plugin(ask=False)
 
-        if self.plugins_combo.currentText() == "Create" and not self._removing_plugin:
+        if self.plugins_combo.currentText() == "Create" and \
+            not self._removing_plugin:
 
-            plug_name, ok = QtWidgets.QInputDialog.getText(self, 'Enter Name', 'Enter plugin name')
+            plug_name, ok = QtWidgets.QInputDialog.getText(self,
+                                                           'Enter Name',
+                                                           'Enter plugin name')
             if ok:
                 self._adding_item = True
                 c = self.plugins_combo.count()
@@ -359,7 +367,7 @@ class _OnIconMenuEntry(QtWidgets.QWidget):
         self.name_input.textChanged.connect(self.refresh_menu_data)
         main_layout.addWidget(self.name_input)
 
-        a =QtWidgets.QLabel("")
+        a = QtWidgets.QLabel("")
         a.setPixmap(QtGui.QIcon(ICONS + "arrow_right.svg").pixmap(22, 22))
         main_layout.addWidget(a)
 
@@ -378,7 +386,7 @@ class _OnIconMenuEntry(QtWidgets.QWidget):
         del_btn.clicked.connect(self.remove_me)
         main_layout.addWidget(del_btn)
 
-        main_layout.setContentsMargins(0,0,0,0)
+        main_layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(main_layout)
 
     def refresh_menu_data(self):
@@ -408,14 +416,15 @@ class MethodDeletionWarning(QtWidgets.QDialog):
         sub_layout.setAlignment(QtCore.Qt.AlignLeft)
 
         risk = QtWidgets.QLabel("")
-        risk.setPixmap(QtGui.QIcon(ICONS + "risk.svg").pixmap(64,64))
+        risk.setPixmap(QtGui.QIcon(ICONS + "risk.svg").pixmap(64, 64))
         risk.setFixedWidth(64)
         risk.setFixedHeight(64)
         sub_layout.addWidget(risk)
 
         warning_layout = QtWidgets.QVBoxLayout()
         warning_layout.setAlignment(QtCore.Qt.AlignTop)
-        warning_layout.addWidget(QtWidgets.QLabel("One or more bindings use this method ! Delete the method anyway ?"))
+        warning_layout.addWidget(QtWidgets.QLabel(("One or more bindings use this method !"
+                                                   " Delete the method anyway ?")))
         warning_layout.addWidget(QtWidgets.QLabel("Binding(s) involved:"))
 
         for k, v in data.iteritems():
@@ -597,10 +606,10 @@ class PluginInfos(QtWidgets.QWidget):
         actions_lay.addWidget(QtWidgets.QLabel("Action:"))
 
         self.actions_combo = QtWidgets.QComboBox()
-        self.actions_combo.addItem(QtGui.QIcon(ICONS + "cloud_checkmark.png"),"On Get")
-        self.actions_combo.addItem(QtGui.QIcon(ICONS + "cloud_save.png"),"On Save")
-        self.actions_combo.addItem(QtGui.QIcon(ICONS + "lock_self.png"),"On Lock")
-        self.actions_combo.addItem(QtGui.QIcon(ICONS + "txt.svg"),"On Icon Clicked")
+        self.actions_combo.addItem(QtGui.QIcon(ICONS + "cloud_checkmark.png"), "On Get")
+        self.actions_combo.addItem(QtGui.QIcon(ICONS + "cloud_save.png"), "On Save")
+        self.actions_combo.addItem(QtGui.QIcon(ICONS + "lock_self.png"), "On Lock")
+        self.actions_combo.addItem(QtGui.QIcon(ICONS + "txt.svg"), "On Icon Clicked")
         self.actions_combo.currentIndexChanged.connect(self.update_selected_action)
         actions_lay.addWidget(self.actions_combo)
         
@@ -612,7 +621,7 @@ class PluginInfos(QtWidgets.QWidget):
         # init first menu entries for current binding
         self.menu_entries_lay = QtWidgets.QVBoxLayout()
         self.menu_entries_lay.setAlignment(QtCore.Qt.AlignTop)
-        self.menu_entries_lay.setContentsMargins(0,0,0,0)
+        self.menu_entries_lay.setContentsMargins(0, 0, 0, 0)
         self.menu_entries_dict = {}
         menu_entries = OnIconMenuEntries(self.method_list, parent=self)
         menu_entries.setVisible(False)
@@ -692,7 +701,7 @@ class PluginInfos(QtWidgets.QWidget):
             self.file_bindings_combo.setCurrentIndex(0)
             uid = self.plugin_infos.plugin_settings._generate_uuid()
             infos = {"uid":uid,
-                     "files":w.entries_values.replace(' ','').split(','),
+                     "files":w.entries_values.replace(' ', '').split(','),
                      "methods":{"on_get":None, "on_save":None,
                                 "on_lock":None, "on_icon_clicked":[]}}
             new_b = awsv_plugin_settings._PluginFileBindings(infos, self)
@@ -791,8 +800,9 @@ file_path = kwargs["path"]"""
         if self.code_editor.unsaved_changes:
 
             r = QtWidgets.QMessageBox.question(self, "Unsaved changes",
-                                           "Save current code ?",
-                                           "Yes", "No, Discard unsaved changes", "Cancel")
+                                               "Save current code ?",
+                                               "Yes", "No, Discard unsaved changes",
+                                               "Cancel")
             if r == 2:
                 self.methods_combo.setCurrentText(self.cur_selected_method)
                 return
@@ -866,7 +876,7 @@ file_path = kwargs["path"]"""
                                            "Delete files binding: " + cur + " ?")
         if r == QtWidgets.QMessageBox.No: return
 
-        files = cur.replace(' ','').split(',')
+        files = cur.replace(' ', '').split(',')
         cur_bin = [b for b in self.plugin_infos.bindings if b.files == files]
         if cur_bin:
             cur_bin = cur_bin[0]
@@ -991,8 +1001,8 @@ file_path = kwargs["path"]"""
 
         if ask:
             r = QtWidgets.QMessageBox.information(self,
-                                              "Confirm", "Save current method code ?",
-                                              "Yes", "Cancel")
+                                                  "Confirm", "Save current method code ?",
+                                                  "Yes", "Cancel")
             if r == 1: return
         
         if not selected_method:
@@ -1061,7 +1071,7 @@ file_path = kwargs["path"]"""
 
         cur_binding = self.file_bindings_combo.currentText()
         uid = self.bindings.get(cur_binding)
-        r = self.plugin_infos.get_bindings(uid = uid)
+        r = self.plugin_infos.get_bindings(uid=uid)
         return r
 
 class PluginManager(QtWidgets.QMainWindow):

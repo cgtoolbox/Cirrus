@@ -1,9 +1,5 @@
 import os
 import sys
-import datetime
-import time
-import tempfile
-from AWS_Vault_core.awsv_logger import Logger
 
 from PySide2 import QtGui
 from PySide2 import QtWidgets
@@ -21,10 +17,7 @@ from AWS_Vault_core.awsv_connection import ConnectionInfos
 ICONS = os.path.dirname(__file__) + "\\icons\\"
 
 exe = sys.executable.split(os.sep)[-1].split('.')[0]
-if exe in ["hindie", "houdinicore", "hescape", "houdinifx"]:
-    IS_HOUDINI = True
-else:
-    IS_HOUDINI = False
+IS_HOUDINI = exe in ["hindie", "houdinicore", "hescape", "houdinifx"]
 
 class PathBarDelimiter(QtWidgets.QLabel):
 
@@ -33,7 +26,7 @@ class PathBarDelimiter(QtWidgets.QLabel):
 
         self.setFixedHeight(24)
         self.setFixedWidth(24)
-        self.setContentsMargins(0,0,0,0)
+        self.setContentsMargins(0, 0, 0, 0)
         self.setPixmap(QtGui.QIcon(ICONS + "pathbar_delimiter.png").pixmap(22,22))
         self.setStyleSheet("""QFrame{background-color: transparent;
                                      border: 0px solid black}""")
@@ -62,7 +55,7 @@ class PathBarButton(QtWidgets.QPushButton):
         self.setFixedHeight(24)
         self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
 
-        self.setContentsMargins(0,0,0,0)
+        self.setContentsMargins(0, 0, 0, 0)
         self.clicked.connect(self.goto)
 
     def goto(self):
@@ -94,9 +87,9 @@ class PathBar(QtWidgets.QFrame):
         self.scroll_layout = QtWidgets.QHBoxLayout()
         self.scroll_layout.setAlignment(QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
         self.scroll_layout.setSpacing(0)
-        self.scroll_layout.setContentsMargins(0,0,0,0)
+        self.scroll_layout.setContentsMargins(0, 0, 0, 0)
         self.scroll_area = QtWidgets.QScrollArea()
-        self.scroll_area.setContentsMargins(0,0,0,0)
+        self.scroll_area.setContentsMargins(0, 0, 0, 0)
         self.scroll_area.setStyleSheet("""QScrollArea{background-color: transparent;
                                                       border: 0px}
                                           QScrollBar{height: 8px}""")
@@ -107,7 +100,7 @@ class PathBar(QtWidgets.QFrame):
         self.main_layout = QtWidgets.QHBoxLayout()
         self.main_layout.setAlignment(QtCore.Qt.AlignLeft|QtCore.Qt.AlignTop)
         self.main_layout.setSpacing(0)
-        self.main_layout.setContentsMargins(0,0,0,0)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
         self.setContentsMargins(5,0,0,0)
         self.main_layout.addWidget(self.scroll_area)
 

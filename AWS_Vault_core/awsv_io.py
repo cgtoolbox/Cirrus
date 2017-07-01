@@ -1,25 +1,15 @@
 import os
-import getpass
-import socket
 import datetime
 import json
 import tempfile
 import shutil
-import datetime
-import time
-from io import BytesIO
-from stat import S_IREAD, S_IRGRP, S_IROTH, S_IWRITE
-import logging
+from stat import S_IWRITE
+
 from AWS_Vault_core.awsv_logger import Logger
-
-from PySide2 import QtCore
-
 from AWS_Vault_core import awsv_objects
 reload(awsv_objects)
-
 from AWS_Vault_core.awsv_connection import ConnectionInfos
 
-import boto3
 import botocore
 
 def get_object_key(object_path):
@@ -66,8 +56,6 @@ def lock_object(object_path="", toggle=True, lock_message=""):
     
     assert Bucket is not None, "Bucket is None"
     assert os.path.exists(object_path), "Object path not valid" + object_path
-    
-    object_key = get_object_key(object_path)
 
     Logger.Log.debug("Lock file: " + object_path + " (" + str(toggle) + ')')
 
@@ -306,7 +294,6 @@ def get_object(object_path="", version_id="", callback=None):
         p, f = os.path.split(object_path)
         p = p.replace('\\', '/')
         f = f.split('.')[0] + awsv_objects.METADATA_IDENTIFIER
-        metadata_file = p + '/' + f
 
         _metadata = awsv_objects.ObjectMetadata(object_key)
         _metadata.update(update_metadata)
@@ -316,7 +303,6 @@ def get_local_version_id(object_path):
     """ Get the local file version_id saved in metadata
     """
     object_path = object_path.replace('\\', '/')
-    local_root = ConnectionInfos.get("local_root")
     metadata_file = object_path.split('.', 1)[0] + awsv_objects.METADATA_IDENTIFIER
 
     if not os.path.exists(metadata_file):
@@ -505,14 +491,19 @@ def refresh_state(object_path=""):
     # metadata desync, no metadata on cloud but file saved on cloud 
     # and metadata found locally
     if not metadata and local_metatada and is_on_cloud is not None:
-        Logger.Log.warning("Metadata object cloud missing for file: " + str(object_path) + " regenerating it")
-        metadata = generate_metadata(object_path, local_metatada.data(), True)
+        Logger.Log.warning("Metadata object cloud missing for file: " \
+                            + str(object_path) + " regenerating it")
+        metadata = generate_metadata(object_path, local_metatada.data(),
+                                     True)
 
     # metadata outdated on cloud
-    if metadata is not None and not awsv_objects.ObjectMetadata.object_up_to_date(metadata):
-        Logger.Log.warning("Metadata object outdated for file: " + str(object_path))
+    if metadata is not None and \
+        not awsv_objects.ObjectMetadata.object_up_to_date(metadata):
+        Logger.Log.warning("Metadata object outdated for file: " \
+                            + str(object_path))
         if local_metatada:
-            metadata = generate_metadata(object_path, local_metatada.data(), True)
+            metadata = generate_metadata(object_path, local_metatada.data(),
+                                         True)
         else:
             metadata = generate_metadata(object_path, None, True)
 

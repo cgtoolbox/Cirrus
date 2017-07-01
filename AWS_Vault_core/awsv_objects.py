@@ -1,18 +1,9 @@
 import getpass
 import datetime
-import tempfile
 import json
-import uuid
 import socket
-import time
 import os
-import logging
-from AWS_Vault_core.awsv_logger import Logger
-
-from PySide2 import QtCore
-
 from AWS_Vault_core.awsv_connection import ConnectionInfos
-from awsv_config import Config
 
 METADATA_IDENTIFIER = ".awsvmd"
 
@@ -38,7 +29,7 @@ class ObjectState(object):
 
     def __init__(self, file_local_path):
 
-        return
+        self.local_path = file_local_path
 
 class ObjectMetadata(object):
 

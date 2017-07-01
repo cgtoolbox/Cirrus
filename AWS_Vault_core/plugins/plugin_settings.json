@@ -19,36 +19,59 @@
                     ], 
                     "uid": "3ffa03e4-00c3-4bda-b7ff-084f9532b18e", 
                     "methods": {
-                        "on_lock": null, 
-                        "on_get": "reload_geo", 
-                        "on_save": null, 
+                        "on_lock": "my_test", 
                         "on_icon_clicked": {
                             "import_bgeo": "Import geo to Current file", 
+                            "test_menu_entry": "Test", 
                             "preview_bgeo": "Preview geo in Gplay"
-                        }
+                        }, 
+                        "on_save": null, 
+                        "on_get": "reload_geo"
                     }
                 }, 
                 {
                     "files": [
                         "hip", 
-                        "hipnc", 
                         "hiplc"
                     ], 
                     "uid": "17247897-51c8-4697-a2d7-c7ca82bc47c8", 
                     "methods": {
                         "on_lock": null, 
-                        "on_get": null, 
-                        "on_save": "preview_bgeo", 
                         "on_icon_clicked": {
-                            "open_hip": "Open Hip file", 
-                            "merge_hip": "Merge Hip File"
-                        }
+                            "open_hipfile": "Open Hip file", 
+                            "preview_bgeo": "Merge Hip File"
+                        }, 
+                        "on_save": "preview_bgeo", 
+                        "on_get": null
                     }
                 }
             ], 
             "enable": "True", 
             "plugin_name": "houdini", 
             "script": "houdini.py"
+        }, 
+        {
+            "software_executable": [
+                "maya"
+            ], 
+            "bindings": [
+                {
+                    "files": [
+                        "mb", 
+                        "ma"
+                    ], 
+                    "uid": "6e5aba13-c393-4b85-8db3-944a95655215", 
+                    "methods": {
+                        "on_lock": null, 
+                        "on_get": null, 
+                        "on_save": "example_method", 
+                        "on_icon_clicked": []
+                    }
+                }
+            ], 
+            "enable": true, 
+            "plugin_name": "maya", 
+            "script": "maya.py"
         }
     ]
 }
