@@ -27,6 +27,16 @@ class ElementFetcherThread(QtCore.QRunnable):
         self.folder_name = ""
         self.cancel = False
 
+        # get list of skipped folders from config.ini
+        self.skipped_folders = Config.get("Folders",
+                                          "LocalSkippedFolders",
+                                          str).split(',')
+        self.skipped_folders_CS = Config.get("Folders",
+                                             "SkippedFoldersCaseSensitive",
+                                             bool)
+        if not self.skipped_folders_CS:
+            self.skipped_folders = [n.lower() for n in self.skipped_folders]
+
         self.signals = ElementFetcherSignals()
 
     def run(self):
@@ -93,6 +103,14 @@ class ElementFetcherThread(QtCore.QRunnable):
 
             if os.path.isdir(el):
                 
+                check_el = element
+                if not self.skipped_folders_CS:
+                    check_el = element.lower()
+
+                if check_el in self.skipped_folders:
+                    Logger.Log.debug("Folder {} found in LocalSkippedFolders: skipped.".format(element))
+                    continue
+
                 if clean_root != "":
                     f = clean_root + element
                 else:
