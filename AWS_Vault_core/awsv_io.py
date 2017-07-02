@@ -9,6 +9,7 @@ from AWS_Vault_core.awsv_logger import Logger
 from AWS_Vault_core import awsv_objects
 reload(awsv_objects)
 from AWS_Vault_core.awsv_connection import ConnectionInfos
+from AWS_Vault_core.awsv_config import Config
 
 import botocore
 
@@ -370,52 +371,6 @@ def remove_unused_metadata(metadata_file_path):
         os.remove(metadata_file_path)
         return True
     return False
-
-def get_local_folder_element(folder):
-
-    if not os.path.exists(folder):
-        Logger.Log.error("Folder {} doesn't exists".format(folder))
-        return None
-
-    Logger.Log.debug("Get local folder elements " + folder)
-
-    elements = os.listdir(folder)
-    local_root = ConnectionInfos.get("local_root")
-    clean_root = folder.replace('\\', '/').replace(local_root, '')
-    if clean_root == '/': clean_root = ''
-    if clean_root.startswith('/'): clean_root = clean_root[1:]
-
-    folders = []
-    files = []
-    meta_files = []
-    f_sizes = []
-
-    result = awsv_objects.BucketFolderElements()
-    result.root = clean_root
-
-    for element in elements:
-        
-        el = folder + '/' + element
-        if not os.path.exists(el):
-            continue
-
-        if os.path.isdir(el):
-            folders.append(clean_root + element)
-        else:
-            if element.endswith(awsv_objects.METADATA_IDENTIFIER):
-                if not remove_unused_metadata(element):
-                    meta_files.append(element)
-            else:
-                s = os.path.getsize(el)
-                f_sizes.append(s)
-                files.append(clean_root + element)
-
-    result.files = files
-    result.folders = folders
-    result.files_size = f_sizes
-    result.metadata = meta_files
-
-    return result
 
 def get_bucket_folder_elements(folder_name=""):
     """ Get all folder elements ( aka: Sub Folders and Files + Metadata ) of a given
