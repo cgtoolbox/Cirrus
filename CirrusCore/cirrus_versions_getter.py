@@ -1,12 +1,12 @@
 import os
-from AWS_Vault_core.awsv_logger import Logger
+from CirrusCore.cirrus_logger import Logger
 
 from PySide2 import QtGui
 from PySide2 import QtCore
 from PySide2 import QtWidgets
 
-from AWS_Vault_core import awsv_io
-reload(awsv_io)
+from CirrusCore import cirrus_io
+reload(cirrus_io)
 
 import botocore
 
@@ -30,7 +30,7 @@ class VersionPickerThread(QtCore.QThread):
         n_ver = 0
         Logger.Log.debug("Fetchin version infos for object: " + self.object_path)
 
-        version = awsv_io.get_object_versions(self.object_path)
+        version = cirrus_io.get_object_versions(self.object_path)
 
         for v in version:
 

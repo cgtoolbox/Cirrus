@@ -3,7 +3,7 @@ import datetime
 import json
 import socket
 import os
-from AWS_Vault_core.awsv_connection import ConnectionInfos
+from CirrusCore.cirrus_connection import ConnectionInfos
 
 METADATA_IDENTIFIER = ".awsvmd"
 

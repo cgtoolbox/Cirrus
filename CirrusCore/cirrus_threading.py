@@ -1,6 +1,6 @@
 from PySide2 import QtCore
 
-from AWS_Vault_core.awsv_io import *
+from CirrusCore.cirrus_io import *
 
 """ 
     All threads ( Runnable objects ) used in the interface for cloud <=> ui interaction
@@ -73,7 +73,7 @@ class ElementFetcherThread(QtCore.QRunnable):
                     if self.cancel: return
                     if f.endswith('/'):
                         continue
-                    if f.endswith(awsv_objects.METADATA_IDENTIFIER):
+                    if f.endswith(cirrus_objects.METADATA_IDENTIFIER):
                         continue
                     if f in elements_sent:
                         continue
@@ -121,7 +121,7 @@ class ElementFetcherThread(QtCore.QRunnable):
                 folders_sent.append(f)
 
             else:
-                if element.endswith(awsv_objects.METADATA_IDENTIFIER):
+                if element.endswith(cirrus_objects.METADATA_IDENTIFIER):
                     remove_unused_metadata(el)
                     continue
                 else:

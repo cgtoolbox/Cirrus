@@ -6,8 +6,8 @@ warnings.filterwarnings("ignore", category=UnicodeWarning)
 import boto3
 import botocore
 
-from AWS_Vault_core.awsv_logger import Logger
-from AWS_Vault_core import awsv_config
+from CirrusCore.cirrus_logger import Logger
+from CirrusCore import cirrus_config
 
 class _singleton(object):
 
@@ -39,11 +39,50 @@ def init_connection(bucket_name="", local_root="", reset=False):
                                                                 local_root)
     Logger.Log.info(m)
 
-    region_name = awsv_config.Config.get("BucketSettings", "DefaultRegionName", str)
+    region_name = cirrus_config.Config.get("BucketSettings", "DefaultRegionName", str)
 
     aws_session = boto3.session.Session(region_name=region_name)
     s3_client = aws_session.client('s3', config=boto3.session.Config(signature_version='s3v4'))
     s3_resource = aws_session.resource('s3', config=boto3.session.Config(signature_version='s3v4'))
+
+    dynamodb = aws_session.resource('dynamodb')
+    database = dynamodb.Table(bucket_name)
+    
+    try:
+        print database.creation_date_time
+
+    except botocore.exceptions.ClientError:
+        
+        Logger.Log.info("Database {} not found, creating a new one.".format(bucket_name))
+        database = dynamodb.create_table(TableName=bucket_name,
+                                         KeySchema=[
+                                                {
+                                                    'AttributeName': 'uid',
+                                                    'KeyType': 'HASH'
+                                                }
+                                             ],
+                                            AttributeDefinitions=[
+                                                {
+                                                    'AttributeName': 'uid',
+                                                    'AttributeType': boto3.dynamodb.types.STRING
+                                                }
+                                           ],
+                                        ProvisionedThroughput={
+                                            'ReadCapacityUnits': 10,
+                                            'WriteCapacityUnits': 10
+                                           }
+                                       )
+        database.meta.client.get_waiter('table_exists').wait(TableName=bucket_name)
+
+
+    database.put_item(
+        Item={
+            'uid': 'coucoucocuocu',
+            'desc' : 'test'
+        }
+    )
+
+    print(database.item_count)
 
     if reset:
         ConnectionInfos.reset()
@@ -51,6 +90,7 @@ def init_connection(bucket_name="", local_root="", reset=False):
     ConnectionInfos(s3_client=s3_client)
     ConnectionInfos(region=region_name)
     ConnectionInfos(s3_resource=s3_resource)
+    ConnectionInfos(database=database)
     
     if bucket_name != "" and local_root != "":
 

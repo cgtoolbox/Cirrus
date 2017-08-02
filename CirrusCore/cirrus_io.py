@@ -5,11 +5,11 @@ import tempfile
 import shutil
 from stat import S_IWRITE
 
-from AWS_Vault_core.awsv_logger import Logger
-from AWS_Vault_core import awsv_objects
-reload(awsv_objects)
-from AWS_Vault_core.awsv_connection import ConnectionInfos
-from AWS_Vault_core.awsv_config import Config
+from CirrusCore.cirrus_logger import Logger
+from CirrusCore import cirrus_objects
+reload(cirrus_objects)
+from CirrusCore.cirrus_connection import ConnectionInfos
+from CirrusCore.cirrus_config import Config
 
 import botocore
 
@@ -63,7 +63,7 @@ def lock_object(object_path="", toggle=True, lock_message=""):
     now = datetime.datetime.now()
 
     if toggle:
-        user_uid = awsv_objects.ObjectMetadata.get_user_uid()
+        user_uid = cirrus_objects.ObjectMetadata.get_user_uid()
         lock_time = now.ctime()
     else:
         user_uid = ""
@@ -102,7 +102,7 @@ def get_metadata(object_path="", force_cloud=False, dump=True):
         return None
     
     object_key = get_object_key(object_path)
-    metadata_file = object_key.split('.', 1)[0] + awsv_objects.METADATA_IDENTIFIER
+    metadata_file = object_key.split('.', 1)[0] + cirrus_objects.METADATA_IDENTIFIER
     metadata_path = os.path.dirname(object_path) + \
                     '/' + metadata_file.split('/')[-1]
 
@@ -139,7 +139,7 @@ def get_metadata(object_path="", force_cloud=False, dump=True):
 
         metadata_version = data.get("metadata_version", -1.0)
 
-        metadata = awsv_objects.ObjectMetadata(object_key)
+        metadata = cirrus_objects.ObjectMetadata(object_key)
         metadata.update(data)
         metadata.update({"metadata_version":metadata_version})  
 
@@ -162,9 +162,9 @@ def generate_metadata(object_path=None, metadata=None, send_to_cloud=True):
 
     object_key = get_object_key(object_path)
 
-    m = awsv_objects.ObjectMetadata(object_key=object_key)
+    m = cirrus_objects.ObjectMetadata(object_key=object_key)
     if metadata:
-        if not awsv_objects.ObjectMetadata.object_up_to_date(metadata):
+        if not cirrus_objects.ObjectMetadata.object_up_to_date(metadata):
             Logger.Log.warning("Metadata object outdated for file: " + str(object_path))
         m.update(metadata)
 
@@ -188,7 +188,7 @@ def send_object(object_path="", message="", callback=None, keep_locked=False):
     
     object_key = get_object_key(object_path)
 
-    user_uid = awsv_objects.ObjectMetadata.get_user_uid()
+    user_uid = cirrus_objects.ObjectMetadata.get_user_uid()
     if keep_locked:
         # if kept locked, fetched the existing locked time and message
         cur_meta = get_metadata(object_path)
@@ -208,7 +208,7 @@ def send_object(object_path="", message="", callback=None, keep_locked=False):
                     "user":user,
                     "latest_upload_user":user_uid}
 
-    metadata = awsv_objects.ObjectMetadata(object_key)
+    metadata = cirrus_objects.ObjectMetadata(object_key)
     metadata.load(raw_metadata)
 
     Logger.Log.debug("[CLD_UP] send object: " + object_path)
@@ -294,9 +294,9 @@ def get_object(object_path="", version_id="", callback=None):
         
         p, f = os.path.split(object_path)
         p = p.replace('\\', '/')
-        f = f.split('.')[0] + awsv_objects.METADATA_IDENTIFIER
+        f = f.split('.')[0] + cirrus_objects.METADATA_IDENTIFIER
 
-        _metadata = awsv_objects.ObjectMetadata(object_key)
+        _metadata = cirrus_objects.ObjectMetadata(object_key)
         _metadata.update(update_metadata)
         _metadata.dump(False)
 
@@ -304,7 +304,7 @@ def get_local_version_id(object_path):
     """ Get the local file version_id saved in metadata
     """
     object_path = object_path.replace('\\', '/')
-    metadata_file = object_path.split('.', 1)[0] + awsv_objects.METADATA_IDENTIFIER
+    metadata_file = object_path.split('.', 1)[0] + cirrus_objects.METADATA_IDENTIFIER
 
     if not os.path.exists(metadata_file):
         return None
@@ -375,7 +375,7 @@ def remove_unused_metadata(metadata_file_path):
 def get_bucket_folder_elements(folder_name=""):
     """ Get all folder elements ( aka: Sub Folders and Files + Metadata ) of a given
         Bucket + Folder name.
-        Returns a awsv_objects.BucketFolderElements object.
+        Returns a cirrus_objects.BucketFolderElements object.
     """
     Bucket = ConnectionInfos.get("bucket")
 
@@ -385,7 +385,7 @@ def get_bucket_folder_elements(folder_name=""):
         if not folder_name.endswith('/'): folder_name += '/'
     s3_client = ConnectionInfos.get("s3_client")
 
-    result = awsv_objects.BucketFolderElements()
+    result = cirrus_objects.BucketFolderElements()
     result.root = folder_name
 
     raw = s3_client.list_objects_v2(Bucket=Bucket.name, Prefix=folder_name, Delimiter='/')
@@ -406,7 +406,7 @@ def get_bucket_folder_elements(folder_name=""):
 
             if fk.endswith('/'): continue
 
-            if fk.endswith(awsv_objects.METADATA_IDENTIFIER):
+            if fk.endswith(cirrus_objects.METADATA_IDENTIFIER):
                 meta_files.append(fk)
             else:
                 f.append(fk)
@@ -453,7 +453,7 @@ def refresh_state(object_path=""):
 
     # metadata outdated on cloud
     if metadata is not None and \
-        not awsv_objects.ObjectMetadata.object_up_to_date(metadata):
+        not cirrus_objects.ObjectMetadata.object_up_to_date(metadata):
         Logger.Log.warning("Metadata object outdated for file: " \
                             + str(object_path))
         if local_metatada:
@@ -472,30 +472,37 @@ def refresh_state(object_path=""):
         metadata.update({"version_id":local_version_id})
         metadata.update({"is_latest":is_latest})
     
-    file_state = awsv_objects.FileState.NONE
+    file_state = cirrus_objects.FileState.NONE
 
     if os.path.exists(object_path):
 
         is_latest = is_local_file_latest(object_path, local_ver=local_version_id)
         if is_on_cloud and is_latest:
-            file_state = awsv_objects.FileState.CLOUD_AND_LOCAL_LATEST
+            file_state = cirrus_objects.FileState.CLOUD_AND_LOCAL_LATEST
 
         elif is_on_cloud and not is_latest:
             if not local_metatada:
-                file_state = awsv_objects.FileState.METADATA_DESYNC
+                file_state = cirrus_objects.FileState.METADATA_DESYNC
             else:
-                file_state = awsv_objects.FileState.CLOUD_AND_LOCAL_NOT_LATEST
+                file_state = cirrus_objects.FileState.CLOUD_AND_LOCAL_NOT_LATEST
 
         else:
             if not is_on_cloud:
-                file_state = awsv_objects.FileState.LOCAL_ONLY
+                file_state = cirrus_objects.FileState.LOCAL_ONLY
 
             if not local_metatada and is_on_cloud:
-                file_state = awsv_objects.FileState.METADATA_DESYNC
+                file_state = cirrus_objects.FileState.METADATA_DESYNC
     else:
-        file_state = awsv_objects.FileState.CLOUD_ONLY
+        file_state = cirrus_objects.FileState.CLOUD_ONLY
 
     if not metadata:
         return file_state, {}
 
     return file_state, metadata.data(remove_locals=False)
+
+def append_changes_to_db(**kwargs):
+    """ Get the changes sent to the cloud and append them
+        to the database in order to keep track of the changes
+        submitted.
+    """
+    dynamodb = boto3.resource('dynamodb')

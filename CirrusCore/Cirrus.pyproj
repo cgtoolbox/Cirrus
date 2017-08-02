@@ -14,6 +14,7 @@
     <InterpreterId>{a7e3a1eb-5ab6-4f1e-8fe1-b73cebc0fced}</InterpreterId>
     <InterpreterVersion>2.7</InterpreterVersion>
     <IsWindowsApplication>True</IsWindowsApplication>
+    <Name>Cirrus</Name>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
   <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
@@ -28,7 +29,7 @@
     <Compile Include="awsv_connection.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="awsv_io.py">
+    <Compile Include="cirrus_io.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="awsv_logger.py">
@@ -90,6 +91,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include=".pylintrc" />
+    <Content Include="config.ini" />
     <Content Include="plugins\plugin_settings.json" />
   </ItemGroup>
   <Import Project="$(PtvsTargetsFile)" Condition="Exists($(PtvsTargetsFile))" />

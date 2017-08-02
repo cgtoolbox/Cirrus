@@ -6,16 +6,16 @@ from PySide2 import QtGui
 from PySide2 import QtCore
 from PySide2 import QtWidgets
 
-from AWS_Vault_core import awsv_plugin_parser
-reload(awsv_plugin_parser)
+from CirrusCore import cirrus_plugin_parser
+reload(cirrus_plugin_parser)
 
-from AWS_Vault_core import awsv_plugin_settings
-reload(awsv_plugin_settings)
+from CirrusCore import cirrus_plugin_settings
+reload(cirrus_plugin_settings)
 
-from AWS_Vault_core import py_highlighter
+from CirrusCore import py_highlighter
 reload(py_highlighter)
 
-from AWS_Vault_core.awsv_logger import Logger
+from CirrusCore.cirrus_logger import Logger
 
 ICONS = os.path.dirname(__file__) + "\\icons\\"
 PLUGINS_FOLDER = os.path.dirname(__file__) + "\\plugins\\"
@@ -704,7 +704,7 @@ class PluginInfos(QtWidgets.QWidget):
                      "files":w.entries_values.replace(' ', '').split(','),
                      "methods":{"on_get":None, "on_save":None,
                                 "on_lock":None, "on_icon_clicked":[]}}
-            new_b = awsv_plugin_settings._PluginFileBindings(infos, self)
+            new_b = cirrus_plugin_settings._PluginFileBindings(infos, self)
             self.plugin_infos.bindings.append(new_b)
             self.methods[w.entries_values] = new_b.methods
             self.toggle_unsaved_changes()
@@ -1087,7 +1087,7 @@ class PluginManager(QtWidgets.QMainWindow):
 
         self.plugins = {}
 
-        self.plugin_settings = awsv_plugin_settings.PluginSettings(plugin_manager=self)
+        self.plugin_settings = cirrus_plugin_settings.PluginSettings(plugin_manager=self)
 
         cw = QtWidgets.QWidget()
         main_layout = QtWidgets.QVBoxLayout()
@@ -1143,7 +1143,7 @@ def example_method(**kwargs):
         infos = self.plugin_settings.add_plugin(plugin_name)
         self.plugin_settings.read_settings()
         self.plugin_entries.plugins = self.plugin_settings.plugins
-        p = awsv_plugin_settings.PluginSettingInfo(infos,
+        p = cirrus_plugin_settings.PluginSettingInfo(infos,
                                                    self.plugin_settings)
         self.display_file_infos(plugin_name, p)
 
@@ -1161,6 +1161,6 @@ def example_method(**kwargs):
 
     def closeEvent(self, e):
 
-        awsv_plugin_parser.get_plugin()
+        cirrus_plugin_parser.get_plugin()
         super(PluginManager, self).closeEvent(e)
             

@@ -1,31 +1,31 @@
 import os
 import sys
 import tempfile
-from AWS_Vault_core.awsv_logger import Logger
+from CirrusCore.cirrus_logger import Logger
 from PySide2 import QtGui
 from PySide2 import QtWidgets
 from PySide2 import QtCore
 import botocore
-from AWS_Vault_core import awsv_io
-reload(awsv_io)
-from AWS_Vault_core import awsv_threading
-reload(awsv_threading)
-from AWS_Vault_core import awsv_objects
-reload(awsv_objects)
-from AWS_Vault_core import awsv_config
-reload(awsv_config)
-from AWS_Vault_core import awsv_widgets_pathbar as pathbar
+from CirrusCore import cirrus_io
+reload(cirrus_io)
+from CirrusCore import cirrus_threading
+reload(cirrus_threading)
+from CirrusCore import cirrus_objects
+reload(cirrus_objects)
+from CirrusCore import cirrus_config
+reload(cirrus_config)
+from CirrusCore import cirrus_widgets_pathbar as pathbar
 reload(pathbar)
-from AWS_Vault_core import awsv_widgets_panels as panels
+from CirrusCore import cirrus_widgets_panels as panels
 reload(panels)
-from AWS_Vault_core import awsv_plugin_parser
-reload(awsv_plugin_parser)
-from AWS_Vault_core import awsv_plugin_manager
-reload(awsv_plugin_manager)
-from AWS_Vault_core.awsv_connection import ConnectionInfos
-from AWS_Vault_core.awsv_connection import init_connection
-from AWS_Vault_core import awsv_io
-reload(awsv_io)
+from CirrusCore import cirrus_plugin_parser
+reload(cirrus_plugin_parser)
+from CirrusCore import cirrus_plugin_manager
+reload(cirrus_plugin_manager)
+from CirrusCore.cirrus_connection import ConnectionInfos
+from CirrusCore.cirrus_connection import init_connection
+from CirrusCore import cirrus_io
+reload(cirrus_io)
 
 ICONS = os.path.dirname(__file__) + "\\icons\\"
 
@@ -262,7 +262,7 @@ class ProjectGetter(QtWidgets.QMainWindow):
                                     parent=self)
         if ask.exec_() == QtWidgets.QMessageBox.StandardButton.No: return
 
-        bucket = awsv_io.get_bucket(bucket_name)
+        bucket = cirrus_io.get_bucket(bucket_name)
 
         if self.worker is not None:
             self.worker.wait(1)
@@ -276,7 +276,7 @@ class ProjectGetter(QtWidgets.QMainWindow):
         Logger.Log.info("Local path: " + prj_path)
 
         self.prj_path = prj_path
-        self.worker = awsv_threading.DownloadProjectThread(bucket, prj_path)
+        self.worker = cirrus_threading.DownloadProjectThread(bucket, prj_path)
         self.worker.start_sgn.connect(self.start_process)
         self.worker.start_element_download_sgn.connect(self.start_download_item)
         self.worker.update_download_progress_sgn.connect(self.update_element_progress)
@@ -288,7 +288,7 @@ class MainWidget(QtWidgets.QFrame):
     def __init__(self, parent=None):
         super(MainWidget, self).__init__(parent=parent)
 
-        awsv_plugin_parser.get_plugin()
+        cirrus_plugin_parser.get_plugin()
 
         self.setProperty("houdiniStyle", IS_HOUDINI)
         self.setWindowFlags(QtCore.Qt.Tool)
@@ -346,7 +346,7 @@ class MainWidget(QtWidgets.QFrame):
 
     def open_plugin_manager(self):
 
-        self.plug_manager_w = awsv_plugin_manager.PluginManager(self)
+        self.plug_manager_w = cirrus_plugin_manager.PluginManager(self)
         self.plug_manager_w.show()
 
     def refresh_plugins(self):

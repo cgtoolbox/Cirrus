@@ -41,7 +41,7 @@
                             "open_hipfile": "Open Hip file", 
                             "preview_bgeo": "Merge Hip File"
                         }, 
-                        "on_save": "preview_bgeo", 
+                        "on_save": null, 
                         "on_get": null
                     }
                 }
@@ -63,9 +63,9 @@
                     "uid": "6e5aba13-c393-4b85-8db3-944a95655215", 
                     "methods": {
                         "on_lock": null, 
-                        "on_get": null, 
+                        "on_icon_clicked": [], 
                         "on_save": "example_method", 
-                        "on_icon_clicked": []
+                        "on_get": null
                     }
                 }
             ], 

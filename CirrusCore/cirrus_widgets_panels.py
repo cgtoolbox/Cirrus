@@ -1,27 +1,27 @@
 import os
 import sys
 import time
-from AWS_Vault_core.awsv_logger import Logger
+from CirrusCore.cirrus_logger import Logger
 
 from PySide2 import QtGui
 from PySide2 import QtWidgets
 from PySide2 import QtCore
 
-from AWS_Vault_core import awsv_io
-reload(awsv_io)
-from AWS_Vault_core import awsv_versions_getter
-reload(awsv_versions_getter)
-from AWS_Vault_core import awsv_threading
-reload(awsv_threading)
-from AWS_Vault_core import awsv_objects
-reload(awsv_objects)
-from AWS_Vault_core import awsv_widgets_pathbar as pathbar
+from CirrusCore import cirrus_io
+reload(cirrus_io)
+from CirrusCore import cirrus_versions_getter
+reload(cirrus_versions_getter)
+from CirrusCore import cirrus_threading
+reload(cirrus_threading)
+from CirrusCore import cirrus_objects
+reload(cirrus_objects)
+from CirrusCore import cirrus_widgets_pathbar as pathbar
 reload(pathbar)
-from AWS_Vault_core import awsv_widgets_inputs
-reload(awsv_widgets_inputs)
-from AWS_Vault_core import awsv_plugin_parser
-reload(awsv_plugin_parser)
-from AWS_Vault_core.awsv_connection import ConnectionInfos
+from CirrusCore import cirrus_widgets_inputs
+reload(cirrus_widgets_inputs)
+from CirrusCore import cirrus_plugin_parser
+reload(cirrus_plugin_parser)
+from CirrusCore.cirrus_connection import ConnectionInfos
 
 ICONS = os.path.dirname(__file__) + "\\icons\\"
 
@@ -38,13 +38,13 @@ class MetadataViewer(QtWidgets.QDialog):
         self.setWindowFlags(QtCore.Qt.Tool)
         self.setWindowTitle("Metadata viewer: " + f)
 
-        metadata = awsv_io.get_metadata(object_path)
+        metadata = cirrus_io.get_metadata(object_path)
 
         main_layout = QtWidgets.QVBoxLayout()
 
         data = []
         data.append(["Object path:", object_path])
-        data.append(["Object Key:", awsv_io.get_object_key(object_path)])
+        data.append(["Object Key:", cirrus_io.get_object_key(object_path)])
 
         if os.path.exists(object_path):
             size = os.path.getsize(object_path) * 0.000001
@@ -53,7 +53,7 @@ class MetadataViewer(QtWidgets.QDialog):
         s = '{0:.3f} Mb'.format(size)
         data.append(["Object local file size:", s])
 
-        data.append(["Is on cloud:", str(awsv_io.check_object(object_path) is not None)])
+        data.append(["Is on cloud:", str(cirrus_io.check_object(object_path) is not None)])
         data.append(["Is local:", str(os.path.exists(object_path))])
 
         if metadata:
@@ -143,7 +143,7 @@ class GetFileFromCloudButton(QtWidgets.QPushButton):
 
     def mousePressEvent(self, event):
 
-        if self.state == awsv_objects.FileState.LOCAL_ONLY:
+        if self.state == cirrus_objects.FileState.LOCAL_ONLY:
             return
 
         if event.button() == QtCore.Qt.RightButton:
@@ -155,19 +155,19 @@ class GetFileFromCloudButton(QtWidgets.QPushButton):
 
         self.state = state
 
-        if state == awsv_objects.FileState.CLOUD_ONLY:
+        if state == cirrus_objects.FileState.CLOUD_ONLY:
             self.setIcon(QtGui.QIcon(ICONS + "cloud_only.png"))
             self.setToolTip("File saved on cloud only\nClick to download the latest version.")
 
-        elif state == awsv_objects.FileState.METADATA_DESYNC:
+        elif state == cirrus_objects.FileState.METADATA_DESYNC:
             self.setIcon(QtGui.QIcon(ICONS + "cloud_meta_desync.png"))
             self.setToolTip("Warning: metadata desyncronized or missing\nDownload the latest version of the file to refresh the metadata.")
 
-        elif state == awsv_objects.FileState.LOCAL_ONLY:
+        elif state == cirrus_objects.FileState.LOCAL_ONLY:
             self.setIcon(QtGui.QIcon(ICONS + "cloud_close.png"))
             self.setToolTip("File saved only locally\nClick on save button to save it on the cloud.")
 
-        elif state == awsv_objects.FileState.CLOUD_AND_LOCAL_NOT_LATEST:
+        elif state == cirrus_objects.FileState.CLOUD_AND_LOCAL_NOT_LATEST:
             self.setIcon(QtGui.QIcon(ICONS + "cloud_checkmark_not_latest.png"))
             self.setToolTip("Local version of the file is not the latest\nClick to download the latest version.\nRight-click to get older versions.")
 
@@ -220,7 +220,7 @@ class PanelFolder(QtWidgets.QFrame):
 
 class PanelFileButtons(QtWidgets.QWidget):
 
-    def __init__(self, parent, state=awsv_objects.FileState.NONE):
+    def __init__(self, parent, state=cirrus_objects.FileState.NONE):
         super(PanelFileButtons, self).__init__(parent=parent)
 
         self.panelfile = parent
@@ -228,7 +228,7 @@ class PanelFileButtons(QtWidgets.QWidget):
         self.state_fetcher = None
         self.state = state
         self.local_file_path = self.panelfile.local_file_path
-        self.is_locked = awsv_objects.FileLockState.UNLOCKED
+        self.is_locked = cirrus_objects.FileLockState.UNLOCKED
 
         self.buttons_layout = QtWidgets.QHBoxLayout()
 
@@ -329,19 +329,19 @@ class PanelFileButtons(QtWidgets.QWidget):
         lock_time = metadata.get("lock_time", "No Timestamp")
 
         if lock_user == "":
-            self.is_locked = awsv_objects.FileLockState.UNLOCKED
+            self.is_locked = cirrus_objects.FileLockState.UNLOCKED
             self.lock_button.setIcon(QtGui.QIcon(ICONS + "notlocked.png"))
             self.lock_button.setToolTip("File not locked")
 
-        elif lock_user == awsv_objects.ObjectMetadata.get_user_uid():
-            self.is_locked = awsv_objects.FileLockState.SELF_LOCKED
+        elif lock_user == cirrus_objects.ObjectMetadata.get_user_uid():
+            self.is_locked = cirrus_objects.FileLockState.SELF_LOCKED
             self.lock_button.setIcon(QtGui.QIcon(ICONS + "lock_self.png"))
             tooltip = ("File locked by: " + lock_user + '\n'
                        "Message: " + lock_message + '\n'
                        "Locked since: " + lock_time + "")
             self.lock_button.setToolTip(tooltip)
         else:
-            self.is_locked = awsv_objects.FileLockState.LOCKED
+            self.is_locked = cirrus_objects.FileLockState.LOCKED
             self.lock_button.setIcon(QtGui.QIcon(ICONS + "locked.png"))
             tooltip = ("File locked by: " + lock_user + '\n'
                        "Message: " + lock_message + '\n'
@@ -352,7 +352,7 @@ class PanelFileButtons(QtWidgets.QWidget):
 
     def refresh_state(self):
         
-        state_fetcher = awsv_threading.FetchStateThread(self.local_file_path)
+        state_fetcher = cirrus_threading.FetchStateThread(self.local_file_path)
         state_fetcher.signals.end_sgn.connect(self.end_state_refreshing)
         state_fetcher.signals.start_sgn.connect(self.start_state_refreshing)
         QtCore.QThreadPool.globalInstance().start(state_fetcher)
@@ -360,29 +360,29 @@ class PanelFileButtons(QtWidgets.QWidget):
     def lock_file(self):
 
         Logger.Log.debug("Refresh state before locking file")
-        state, metadata = awsv_io.refresh_state(self.local_file_path)
+        state, metadata = cirrus_io.refresh_state(self.local_file_path)
         self.end_state_refreshing(state, metadata)
 
         # if not on cloud, you can't lock the file
-        if self.state == awsv_objects.FileState.LOCAL_ONLY:
+        if self.state == cirrus_objects.FileState.LOCAL_ONLY:
             Logger.Log.debug("Trying to lock a local-only file: " + self.local_file_path)
             QtWidgets.QMessageBox.warning(self, "Error",
                                           ("Trying to lock a local-only file,\n"
                                            "Send the object on the cloud first."))
             return
 
-        if self.state == awsv_objects.FileState.CLOUD_ONLY:
+        if self.state == cirrus_objects.FileState.CLOUD_ONLY:
             Logger.Log.debug("Trying to lock a cloud-only file: " + self.local_file_path)
             QtWidgets.QMessageBox.warning(self, "Error",
                                           ("Trying to lock a cloud-only file,\n"
                                            "Get the latest version from the cloud first."))
             return
 
-        if self.is_locked == awsv_objects.FileLockState.LOCKED:
+        if self.is_locked == cirrus_objects.FileLockState.LOCKED:
             QtWidgets.QMessageBox.warning(self, "Error", "File already locked")
             return
 
-        if self.is_locked == awsv_objects.FileLockState.SELF_LOCKED:
+        if self.is_locked == cirrus_objects.FileLockState.SELF_LOCKED:
 
             ico = QtWidgets.QMessageBox.Warning
             confirm_msg = "Do you want to unlock the file ?"
@@ -406,25 +406,25 @@ class PanelFileButtons(QtWidgets.QWidget):
         lock_message = ""
 
         if toggle:
-            ask_lock_message = awsv_widgets_inputs.MessageInput(False, True, self)
+            ask_lock_message = cirrus_widgets_inputs.MessageInput(False, True, self)
             ask_lock_message.exec_()
             lock_message = ask_lock_message.message
             if ask_lock_message.cancel:
                 return
         
-        m = awsv_io.lock_object(object_path=self.local_file_path,
+        m = cirrus_io.lock_object(object_path=self.local_file_path,
                                 toggle=toggle,
                                 lock_message=lock_message)
 
         if toggle:
-            self.is_locked = awsv_objects.FileLockState.SELF_LOCKED
+            self.is_locked = cirrus_objects.FileLockState.SELF_LOCKED
             tooltip = ("File locked by: " + m.get("user", "") + '\n'
                        "Message: " + m.get("lock_message", "No Message") + '\n'
                        "Locked since: " + m.get("lock_time", "No timestamp") + "")
             self.lock_button.setIcon(QtGui.QIcon(ICONS + "lock_self.png"))
             self.lock_button.setToolTip(tooltip)
         else:
-            self.is_locked = awsv_objects.FileLockState.UNLOCKED
+            self.is_locked = cirrus_objects.FileLockState.UNLOCKED
             self.lock_button.setIcon(QtGui.QIcon(ICONS + "notlocked.png"))
             self.lock_button.setToolTip("File not locked")
 
@@ -433,7 +433,7 @@ class PanelFileButtons(QtWidgets.QWidget):
 
     def open_versions(self):
 
-        version_picker = awsv_versions_getter.VersionPicker(self.local_file_path,
+        version_picker = cirrus_versions_getter.VersionPicker(self.local_file_path,
                                                             parent=self)
         version_picker.exec_()
 
@@ -448,7 +448,7 @@ class PanelFileButtons(QtWidgets.QWidget):
 
 class PanelFile(PanelFolder):
 
-    def __init__(self, name="", path="", state=awsv_objects.FileState.NONE, parent=None):
+    def __init__(self, name="", path="", state=cirrus_objects.FileState.NONE, parent=None):
 
         self.state = state
         self.icon_menu = None
@@ -530,10 +530,10 @@ class PanelFile(PanelFolder):
         root, f = os.path.split(self.local_file_path)
         ex = f.split('.', 1)[-1]
 
-        if not ex in awsv_plugin_parser.PluginRepository.VALID_FILES:
+        if not ex in cirrus_plugin_parser.PluginRepository.VALID_FILES:
             return
 
-        for plugin in awsv_plugin_parser.PluginRepository.PLUGINS:
+        for plugin in cirrus_plugin_parser.PluginRepository.PLUGINS:
             if ex in plugin.files:
                 self.plugin = plugin
                 break
@@ -563,7 +563,7 @@ class PanelFile(PanelFolder):
             self.activity_upload_ico.setVisible(True)
             self.upload_movie.start()
         else:
-            s = awsv_io.get_object_size(self.local_file_path)
+            s = cirrus_io.get_object_size(self.local_file_path)
             self.activity_progress.setMaximum(s)
             self.activity_download_ico.setVisible(True)
             self.download_movie.start()
@@ -622,7 +622,7 @@ class PanelFile(PanelFolder):
 
         self.activity_progress.setVisible(True)
 
-        worker = awsv_threading.FileIOThread(self.local_file_path, mode=1,
+        worker = cirrus_threading.FileIOThread(self.local_file_path, mode=1,
                                              version_id=version_id)
        
         worker.signals.start_sgn.connect(self.start_progress)
@@ -633,8 +633,8 @@ class PanelFile(PanelFolder):
 
     def save_to_cloud(self):
 
-        if not self.file_buttons.state == awsv_objects.FileState.LOCAL_ONLY:
-            if not self.file_buttons.is_locked == awsv_objects.FileLockState.SELF_LOCKED:
+        if not self.file_buttons.state == cirrus_objects.FileState.LOCAL_ONLY:
+            if not self.file_buttons.is_locked == cirrus_objects.FileLockState.SELF_LOCKED:
                 QtWidgets.QMessageBox.warning(self, "Error", "Can't save object to cloud, you have to lock the file first")
                 return
 
@@ -657,7 +657,7 @@ class PanelFile(PanelFolder):
         
         if ask.exec_() == QtWidgets.QMessageBox.StandardButton.No: return
         
-        ask_msg = awsv_widgets_inputs.MessageInput(parent=self)
+        ask_msg = cirrus_widgets_inputs.MessageInput(parent=self)
         ask_msg.move(QtGui.QCursor.pos() - ( geo.topRight() * 3 ))
         ask_msg.exec_()
 
@@ -674,7 +674,7 @@ class PanelFile(PanelFolder):
         s = os.path.getsize(self.local_file_path)
         self.activity_progress.setMaximum(s)
 
-        self.worker = awsv_threading.FileIOThread(self.local_file_path, message=msg,
+        self.worker = cirrus_threading.FileIOThread(self.local_file_path, message=msg,
                                                   keep_locked=keep_locked)
        
         self.worker.signals.start_sgn.connect(self.start_progress)
@@ -772,7 +772,7 @@ class Panel(QtWidgets.QFrame):
             self.fetcher = None
             time.sleep(1)
 
-        self.fetcher = awsv_threading.ElementFetcherThread()
+        self.fetcher = cirrus_threading.ElementFetcherThread()
         self.fetcher.bucket = ConnectionInfos.get("bucket")
         self.fetcher.folder_name = self.subfolder
         self.fetcher.signals.add_folder.connect(self.add_folder)
@@ -846,7 +846,7 @@ class Panel(QtWidgets.QFrame):
         for f in sorted(local_data.files):
             if f in cloud_data.files: continue
             file_name = f.split('/')[-1]
-            w = PanelFile(name=file_name, path=f, state=awsv_objects.FileState.LOCAL_ONLY,
+            w = PanelFile(name=file_name, path=f, state=cirrus_objects.FileState.LOCAL_ONLY,
                           parent=self)
             self.elements.append(w)
             self.elements_layout.addWidget(w)

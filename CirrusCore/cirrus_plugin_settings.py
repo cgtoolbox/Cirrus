@@ -2,9 +2,9 @@ import json
 import os
 import sys
 import uuid
-from AWS_Vault_core.awsv_logger import Logger
-from AWS_Vault_core.awsv_plugin_errors import *
-from AWS_Vault_core import awsv_plugin_parser
+from CirrusCore.cirrus_logger import Logger
+from CirrusCore.cirrus_plugin_errors import *
+from CirrusCore import cirrus_plugin_parser
 
 plugin_settings = os.path.dirname(__file__) + os.sep + "plugins" + os.sep + "plugin_settings.json"
 plugins_scripts = os.path.dirname(__file__) + os.sep + "plugins"
@@ -273,7 +273,7 @@ class PluginSettings():
             json.dump(plugin_data, data, indent=4)
 
         # refresh plugins
-        awsv_plugin_parser.get_plugin()
+        cirrus_plugin_parser.get_plugin()
 
         # refresh plugin in panels
         self.plugin_manager.refresh_plugins()

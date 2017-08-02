@@ -5,14 +5,14 @@ from PySide2 import QtGui
 from PySide2 import QtWidgets
 from PySide2 import QtCore
 
-from AWS_Vault_core import awsv_io
-reload(awsv_io)
-from AWS_Vault_core import awsv_objects
-reload(awsv_objects)
-from AWS_Vault_core import awsv_config
-reload(awsv_config)
+from CirrusCore import cirrus_io
+reload(cirrus_io)
+from CirrusCore import cirrus_objects
+reload(cirrus_objects)
+from CirrusCore import cirrus_config
+reload(cirrus_config)
 
-from AWS_Vault_core.awsv_connection import ConnectionInfos
+from CirrusCore.cirrus_connection import ConnectionInfos
 
 ICONS = os.path.dirname(__file__) + "\\icons\\"
 

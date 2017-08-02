@@ -2,10 +2,10 @@ import json
 import os
 import sys
 import imp
-from AWS_Vault_core.awsv_logger import Logger
-from AWS_Vault_core.awsv_plugin_errors import *
-from AWS_Vault_core.awsv_io import get_object_key
-from AWS_Vault_core.awsv_connection import ConnectionInfos
+from CirrusCore.cirrus_logger import Logger
+from CirrusCore.cirrus_plugin_errors import *
+from CirrusCore.cirrus_io import get_object_key
+from CirrusCore.cirrus_connection import ConnectionInfos
 
 from PySide2 import QtWidgets
 
