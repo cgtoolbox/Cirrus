@@ -23,49 +23,47 @@
     <PtvsTargetsFile>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets</PtvsTargetsFile>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="awsv_config.py">
+    <Compile Include="cirrus_config.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="awsv_connection.py">
+    <Compile Include="cirrus_connection.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="cirrus_io.py">
+    <Compile Include="cirrus_io.py" />
+    <Compile Include="cirrus_logger.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="awsv_logger.py">
+    <Compile Include="cirrus_objects.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="awsv_objects.py">
+    <Compile Include="cirrus_plugin_errors.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="awsv_plugin_errors.py">
+    <Compile Include="cirrus_plugin_manager.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="awsv_plugin_manager.py">
+    <Compile Include="cirrus_plugin_parser.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="awsv_plugin_parser.py">
+    <Compile Include="cirrus_plugin_settings.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="awsv_plugin_settings.py">
+    <Compile Include="cirrus_threading.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="awsv_threading.py">
+    <Compile Include="cirrus_versions_getter.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="awsv_versions_getter.py">
+    <Compile Include="cirrus_widgets.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="awsv_widgets.py">
+    <Compile Include="cirrus_widgets_inputs.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="awsv_widgets_inputs.py">
+    <Compile Include="cirrus_widgets_panels.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="awsv_widgets_panels.py">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="awsv_widgets_pathbar.py">
+    <Compile Include="cirrus_widgets_pathbar.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="main.py">
@@ -87,11 +85,76 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="icons\" />
+    <Folder Include="icons\file_types\" />
     <Folder Include="plugins\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include=".pylintrc" />
     <Content Include="config.ini" />
+    <Content Include="icons\add.svg" />
+    <Content Include="icons\arrow_down.svg" />
+    <Content Include="icons\arrow_left.svg" />
+    <Content Include="icons\arrow_right.svg" />
+    <Content Include="icons\arrow_up.svg" />
+    <Content Include="icons\checkmark.svg" />
+    <Content Include="icons\close.svg" />
+    <Content Include="icons\cloud.svg" />
+    <Content Include="icons\cloud_checkmark.png" />
+    <Content Include="icons\cloud_checkmark_not_latest.png" />
+    <Content Include="icons\cloud_close.png" />
+    <Content Include="icons\cloud_down.png" />
+    <Content Include="icons\cloud_lock_closed.png" />
+    <Content Include="icons\cloud_meta_desync.png" />
+    <Content Include="icons\cloud_only.png" />
+    <Content Include="icons\cloud_save.png" />
+    <Content Include="icons\cloud_up.png" />
+    <Content Include="icons\cloud_warning.png" />
+    <Content Include="icons\database.svg" />
+    <Content Include="icons\document.svg" />
+    <Content Include="icons\down.svg" />
+    <Content Include="icons\download.gif" />
+    <Content Include="icons\download.svg" />
+    <Content Include="icons\edit.svg" />
+    <Content Include="icons\file_types\3ds.svg" />
+    <Content Include="icons\file_types\bgeo.svg" />
+    <Content Include="icons\file_types\hda.svg" />
+    <Content Include="icons\file_types\hdalc.svg" />
+    <Content Include="icons\file_types\hdanc.svg" />
+    <Content Include="icons\file_types\hip.svg" />
+    <Content Include="icons\file_types\hiplc.svg" />
+    <Content Include="icons\file_types\hipnc.svg" />
+    <Content Include="icons\file_types\ies.svg" />
+    <Content Include="icons\file_types\ma.svg" />
+    <Content Include="icons\file_types\max.svg" />
+    <Content Include="icons\file_types\mb.svg" />
+    <Content Include="icons\file_types\obj.svg" />
+    <Content Include="icons\file_types\otl.svg" />
+    <Content Include="icons\file_types\otllc.svg" />
+    <Content Include="icons\file_types\otlnc.svg" />
+    <Content Include="icons\file_types\txt.svg" />
+    <Content Include="icons\folder.svg" />
+    <Content Include="icons\folder_open.svg" />
+    <Content Include="icons\inbox.svg" />
+    <Content Include="icons\info.svg" />
+    <Content Include="icons\loading.gif" />
+    <Content Include="icons\locked.png" />
+    <Content Include="icons\lock_self.png" />
+    <Content Include="icons\notlocked.png" />
+    <Content Include="icons\open_root.svg" />
+    <Content Include="icons\pathbar_delimiter.png" />
+    <Content Include="icons\plugin.svg" />
+    <Content Include="icons\publish.svg" />
+    <Content Include="icons\refresh.svg" />
+    <Content Include="icons\reload.svg" />
+    <Content Include="icons\risk.svg" />
+    <Content Include="icons\root.svg" />
+    <Content Include="icons\save.svg" />
+    <Content Include="icons\select_object.svg" />
+    <Content Include="icons\treasure_chest.svg" />
+    <Content Include="icons\txt.svg" />
+    <Content Include="icons\upload.gif" />
+    <Content Include="icons\vault.svg" />
+    <Content Include="icons\white_list.svg" />
     <Content Include="plugins\plugin_settings.json" />
   </ItemGroup>
   <Import Project="$(PtvsTargetsFile)" Condition="Exists($(PtvsTargetsFile))" />
