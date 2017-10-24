@@ -291,6 +291,7 @@ class MainWidget(QtWidgets.QFrame):
         cirrus_plugin_parser.get_plugin()
 
         self.setProperty("houdiniStyle", IS_HOUDINI)
+        self.setObjectName("mainFrame")
         self.setWindowFlags(QtCore.Qt.Tool)
         self.setObjectName("Vault")
         self.setWindowTitle("Vault")
@@ -473,5 +474,3 @@ class MainWidget(QtWidgets.QFrame):
             panel.bucket = None
 
         super(MainWidget, self).closeEvent(event)
-        
-        

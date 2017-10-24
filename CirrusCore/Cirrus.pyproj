@@ -86,6 +86,7 @@
   <ItemGroup>
     <Folder Include="icons\" />
     <Folder Include="icons\file_types\" />
+    <Folder Include="stylesheets\" />
     <Folder Include="plugins\" />
   </ItemGroup>
   <ItemGroup>
@@ -156,6 +157,8 @@
     <Content Include="icons\vault.svg" />
     <Content Include="icons\white_list.svg" />
     <Content Include="plugins\plugin_settings.json" />
+    <Content Include="stylesheets\colors_dark.inf" />
+    <Content Include="stylesheets\style.stylesheet" />
   </ItemGroup>
   <Import Project="$(PtvsTargetsFile)" Condition="Exists($(PtvsTargetsFile))" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="!Exists($(PtvsTargetsFile))" />

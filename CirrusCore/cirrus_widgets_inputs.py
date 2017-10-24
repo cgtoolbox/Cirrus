@@ -6,6 +6,7 @@ class MessageInput(QtWidgets.QDialog):
         super(MessageInput, self).__init__(parent=parent)
 
         self.setWindowTitle("Message")
+        self.setObjectName("popupInput")
         self.message = ""
         self.keep_locked = False
         self.cancel = False
@@ -39,10 +40,6 @@ class MessageInput(QtWidgets.QDialog):
 
         self.is_mandatory = is_mandatory
 
-        self.setStyleSheet("""QLabel{background-color: transparent}
-                              QTextEdit{background-color: #1a1a1a;
-                                        color: #f2f2f2}""")
-
     def cancel_process(self):
         
         self.cancel = True
@@ -52,7 +49,7 @@ class MessageInput(QtWidgets.QDialog):
 
         msg = self.text_edit.toPlainText()
         if msg.strip() == "" and self.is_mandatory:
-            QtWidgets.QMessageBox.warning(self, "Warning", "Message is empty")
+            QtWidgets.QMessageBox.warning("Warning", "Message is empty", self)
             return
 
         self.message = msg

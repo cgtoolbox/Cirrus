@@ -107,7 +107,7 @@ class ActivityWidget(QtWidgets.QWidget):
 
     def __init__(self, *args):
         super(ActivityWidget, self).__init__(*args)
-
+        
         self.main_layout = QtWidgets.QVBoxLayout()
 
         self.movie = QtGui.QMovie(ICONS + "loading.gif", parent=self)
@@ -132,9 +132,8 @@ class GetFileFromCloudButton(QtWidgets.QPushButton):
 
     def __init__(self, panelfile, state, parent=None):
         super(GetFileFromCloudButton, self).__init__("")
-        self.setStyleSheet("""QPushButton{background-color: transparent;border: 0px}
-                              QPushButton:hover{background-color: #607e9c;border: 0px}""")
 
+        self.setObjectName("flatButton")
         self.panelfile = panelfile
         self.state = state
         self.parent_w = parent
@@ -188,8 +187,7 @@ class PanelFolder(QtWidgets.QFrame):
         self.setToolTip("Path: " + str(self.path))
 
         self.setAutoFillBackground(True)
-        self.setStyleSheet("""QFrame{background-color: #3b4753}
-                              QFrame:hover{background-color: #4c5967}""")
+        self.setObjectName("panelFolder")
         self.setFixedHeight(45)
         self.main_layout = QtWidgets.QHBoxLayout()
         self.main_layout.setSpacing(5)
@@ -203,7 +201,7 @@ class PanelFolder(QtWidgets.QFrame):
         self.ico.setIcon(QtGui.QIcon(ICONS + "folder.svg"))
         self.main_layout.addWidget(self.ico)
         self.label = QtWidgets.QLabel(name)
-        self.label.setStyleSheet("background-color: transparent")
+        self.label.setObjectName("panelFolderLabel")
         self.main_layout.addWidget(self.label)
         self.setLayout(self.main_layout)
         self.setContentsMargins(15,0,0,0)
@@ -239,8 +237,7 @@ class PanelFileButtons(QtWidgets.QWidget):
         self.activity.setVisible(False)
 
         self.save_to_cloud_button = QtWidgets.QPushButton("")
-        self.save_to_cloud_button.setStyleSheet("""QPushButton{background-color: transparent;border: 0px}
-                                             QPushButton:hover{background-color: #607e9c;border: 0px}""")
+        self.save_to_cloud_button.setObjectName("flatButton")
         self.save_to_cloud_button.setIcon(QtGui.QIcon(ICONS + "cloud_save.png"))
         self.save_to_cloud_button.setIconSize(QtCore.QSize(26, 26))
         self.save_to_cloud_button.setFixedSize(QtCore.QSize(28, 28))
@@ -258,8 +255,7 @@ class PanelFileButtons(QtWidgets.QWidget):
         self.buttons_layout.addWidget(self.is_on_cloud_button)
 
         self.lock_button = QtWidgets.QPushButton("")
-        self.lock_button.setStyleSheet("""QPushButton{background-color: transparent;border: 0px}
-                                             QPushButton:hover{background-color: #607e9c;border: 0px}""")
+        self.lock_button.setObjectName("flatButton")
         self.lock_button.setIcon(QtGui.QIcon(ICONS + "notlocked.png"))
         self.lock_button.setIconSize(QtCore.QSize(26, 26))
         self.lock_button.setFixedSize(QtCore.QSize(28, 28))
@@ -267,8 +263,7 @@ class PanelFileButtons(QtWidgets.QWidget):
         self.buttons_layout.addWidget(self.lock_button)
 
         self.infos_button = QtWidgets.QPushButton("")
-        self.infos_button.setStyleSheet("""QPushButton{background-color: transparent;border: 0px}
-                                             QPushButton:hover{background-color: #607e9c;border: 0px}""")
+        self.infos_button.setObjectName("flatButton")
         self.infos_button.setIcon(QtGui.QIcon(ICONS + "info.svg"))
         self.infos_button.setIconSize(QtCore.QSize(26, 26))
         self.infos_button.setFixedSize(QtCore.QSize(28, 28))
@@ -278,8 +273,7 @@ class PanelFileButtons(QtWidgets.QWidget):
         self.refresh_button = QtWidgets.QPushButton("")
         self.refresh_button.setIconSize(QtCore.QSize(26, 26))
         self.refresh_button.setFixedSize(QtCore.QSize(28, 28))
-        self.refresh_button.setStyleSheet("""QPushButton{background-color: transparent;border: 0px}
-                                             QPushButton:hover{background-color: #607e9c;border: 0px}""")
+        self.refresh_button.setObjectName("flatButton")
         self.refresh_button.setToolTip("Refresh current file metadata")
         self.refresh_button.setIcon(QtGui.QIcon(ICONS + "reload.svg"))
         self.refresh_button.clicked.connect(self.refresh_state)
@@ -463,15 +457,13 @@ class PanelFile(PanelFolder):
             self.local_file_size = 0.0
 
         super(PanelFile, self).__init__(name=name, path=path, parent=parent)
-
+        self.setObjectName("panelFile")
+        self.label.setObjectName("panelFileLabel")
         self.setToolTip("Local path: " + self.local_file_path + '\n' + \
                         "Cloud path: " + path + '\n' + \
                         "File Size: " + '{0:.3f}'.format(self.local_file_size) + " mb")
 
     def init_buttons(self):
-        
-        self.setStyleSheet("""QFrame{background-color: #3e5975}
-                              QFrame:hover{background-color: #4d6b89}""")
 
         file_extension = self.path.split('.')[-1]
         icon = ICONS + "file_types/" + file_extension + ".svg"
@@ -497,6 +489,7 @@ class PanelFile(PanelFolder):
         self.main_layout.addWidget(self.activity_progress)
 
         self.activity_upload_ico = QtWidgets.QLabel()
+        self.activity_upload_ico.setObjectName("activityWidget")
         self.activity_upload_ico.setFixedHeight(29)
         self.activity_upload_ico.setFixedWidth(29)
         self.upload_movie = QtGui.QMovie(ICONS + "upload.gif", parent=self)
@@ -505,6 +498,7 @@ class PanelFile(PanelFolder):
         self.main_layout.addWidget(self.activity_upload_ico)
 
         self.activity_download_ico = QtWidgets.QLabel()
+        self.activity_download_ico.setObjectName("activityWidget")
         self.activity_download_ico.setFixedHeight(29)
         self.activity_download_ico.setFixedWidth(29)
         self.download_movie = QtGui.QMovie(ICONS + "download.gif", parent=self)
@@ -614,9 +608,6 @@ class PanelFile(PanelFolder):
         geo = ask.frameGeometry()
         
         ask.move(QtGui.QCursor.pos() - ( geo.topRight() * 3 ))
-        ask.setStyleSheet("""QMessageBox{background-color: #3e5975}
-                             QFrame{background-color: #3e5975}
-                             QLabel{background-color: #3e5975}""")
         
         if ask.exec_() == QtWidgets.QMessageBox.StandardButton.No: return
 
@@ -651,9 +642,6 @@ class PanelFile(PanelFolder):
         geo = ask.frameGeometry()
         
         ask.move(QtGui.QCursor.pos() - ( geo.topRight() * 3 ))
-        ask.setStyleSheet("""QMessageBox{background-color: #3e5975}
-                             QFrame{background-color: #3e5975}
-                             QLabel{background-color: #3e5975}""")
         
         if ask.exec_() == QtWidgets.QMessageBox.StandardButton.No: return
         
@@ -693,9 +681,10 @@ class Panel(QtWidgets.QFrame):
         self.subfolder = subfolder
         self.fetcher = None
         self.cur_folder_id = 0
+        self.panel_name = panel_name
         
         self.setProperty("houdiniStyle", IS_HOUDINI)
-        self.setObjectName("panel_" + panel_name)
+        self.setObjectName("panelBase")
         self.main_layout = QtWidgets.QVBoxLayout()
         self.main_layout.setContentsMargins(0, 0, 0, 0)
         self.main_layout.setSpacing(0)
@@ -712,7 +701,9 @@ class Panel(QtWidgets.QFrame):
         self.ico.setPixmap(QtGui.QIcon(ICONS + "folder_open.svg").pixmap(28, 28))
 
         self.header_layout.addWidget(self.ico)
-        self.header_layout.addWidget(QtWidgets.QLabel(panel_name.split('/')[-1]))
+        lbl = QtWidgets.QLabel(panel_name.split('/')[-1])
+        lbl.setObjectName("headerLabel")
+        self.header_layout.addWidget(lbl)
         self.header_layout.addStretch(1)
 
         self.activity_w = ActivityWidget()
@@ -723,21 +714,18 @@ class Panel(QtWidgets.QFrame):
         self.refresh_button.setFixedHeight(28)
         self.refresh_button.setFixedWidth(28)
         self.refresh_button.setIconSize(QtCore.QSize(26, 26))
-        self.refresh_button.setStyleSheet("""QPushButton{background-color: transparent;border: 0px}
-                                             QPushButton:hover{background-color: #525666;border: 0px}""")
+        self.refresh_button.setObjectName("headerButton")
         self.refresh_button.clicked.connect(lambda: self.init_fetching(reset=True))
         self.refresh_button.setToolTip("Refresh current folder state")
         self.refresh_button.setIcon(QtGui.QIcon(ICONS + "reload.svg"))
         self.header_layout.addWidget(self.refresh_button)
         self.header.setLayout(self.header_layout)
         self.main_layout.addWidget(self.header)
-        self.header.setStyleSheet("""QFrame{background-color: #2e3241}""")
 
         # elements
         self.elements = []
         self.element_scroll = QtWidgets.QScrollArea()
-        self.element_scroll.setStyleSheet("""QScrollArea{background-color: transparent;
-                                                         border: 0px}""")
+        self.element_scroll.setObjectName("elementScroll")
         self.element_scroll.setWidgetResizable(True)
         self.elements_layout = QtWidgets.QVBoxLayout()
         self.elements_layout.setAlignment(QtCore.Qt.AlignTop)

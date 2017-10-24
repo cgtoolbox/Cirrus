@@ -24,27 +24,23 @@ class PathBarDelimiter(QtWidgets.QLabel):
     def __init__(self, parent=None):
         super(PathBarDelimiter, self).__init__(parent=parent)
 
+        self.setObjectName("navBarDelimiter")
+
         self.setFixedHeight(24)
         self.setFixedWidth(24)
         self.setContentsMargins(0, 0, 0, 0)
         self.setPixmap(QtGui.QIcon(ICONS + "pathbar_delimiter.png").pixmap(22,22))
-        self.setStyleSheet("""QFrame{background-color: transparent;
-                                     border: 0px solid black}""")
 
 class PathBarButton(QtWidgets.QPushButton):
 
     def __init__(self, label="", icon="folder.svg", path="", isroot=False, parent=None):
         super(PathBarButton, self).__init__(parent=parent)
 
+        self.setObjectName("pathBarButton")
         self.isroot = isroot
         self.pathbar = parent
         self.setProperty("houdiniStyle", IS_HOUDINI)
-        self.setStyleSheet("""QPushButton{background-color: transparent;
-                                          border: 0px;
-                                          padding: 2px}
-                              QPushButton:hover{background-color: #444444;
-                                                border: 0px;
-                                                padding: 2px}""")
+
         self.setText(label)
         self.label = label
         self.path = path
@@ -78,10 +74,7 @@ class PathBar(QtWidgets.QFrame):
         self.setObjectName("pathbar")
         self.main_ui = parent
         self.root = root
-        self.setStyleSheet("""QFrame{
-                                 background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                                             stop: 0 #3d3d3d, stop: 1.0 #303030);
-                                 border: 1px solid #232425}""")
+        
         self.setFixedHeight(32)
         self.scroll_widget = QtWidgets.QWidget()
         self.scroll_layout = QtWidgets.QHBoxLayout()
@@ -90,9 +83,7 @@ class PathBar(QtWidgets.QFrame):
         self.scroll_layout.setContentsMargins(0, 0, 0, 0)
         self.scroll_area = QtWidgets.QScrollArea()
         self.scroll_area.setContentsMargins(0, 0, 0, 0)
-        self.scroll_area.setStyleSheet("""QScrollArea{background-color: transparent;
-                                                      border: 0px}
-                                          QScrollBar{height: 8px}""")
+        self.scroll_area.setObjectName("pathbarscroll")
         self.scroll_area.setWidgetResizable(True)
         self.scroll_widget.setLayout(self.scroll_layout)
         self.scroll_area.setWidget(self.scroll_widget)

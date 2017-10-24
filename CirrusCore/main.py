@@ -48,12 +48,44 @@ def init_logger():
     app_log.setLevel(debug_level)
     app_log.addHandler(handler)
 
+def init_stylesheet():
+
+    s = os.path.dirname(__file__) + "/stylesheets/style.stylesheet"
+    with open(s, 'r') as f:
+        style = f.read()
+
+    c = os.path.dirname(__file__) + "/stylesheets/colors_dark.inf"
+    with open(c, 'r') as f:
+        raw_colors = f.read()
+        colors = [c.strip() for c in raw_colors.split('\n')
+                  if not c.startswith("//") and c != '']
+        
+        for c in colors:
+            k, v = c.split('=')
+            raw_colors = raw_colors.replace('%' + k + '%', v)
+
+    colors = [c.strip() for c in raw_colors.split('\n')
+              if not c.startswith('//') and c != '']
+
+    for col in colors:
+        if col.strip() == '': continue
+
+        k, v = col.split('=')
+        if v.strip() != '':
+            style = style.replace('%' + k + '%', v) 
+
+    with open("D:/debug.txt", "w") as f:
+        f.write(style)
+    return style
+
 def get_main_widget():
     
     Logger.Log.info("=== New session ===")
     Logger.Log.info("user uid: " + getpass.getuser() + '@' + socket.gethostname())
     Logger.Log.info("Executable: " + sys.executable)
-    return cirrus_widgets.MainWidget()
+    w = cirrus_widgets.MainWidget()
+    w.setStyleSheet(init_stylesheet())
+    return w
 
 def launch_standalone(args):
     

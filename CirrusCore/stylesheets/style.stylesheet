@@ -1,0 +1,180 @@
+/* ---- QFRAME ---- */
+QFrame {
+	background-color:%BACKGROUND_BASE%;
+	color:%TEXT_BASE%;
+}
+
+QFrame#pathbar{
+    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                stop: 0 %NAV_BAR_BACKGROUND_BOTTOM%,
+								stop: 1.0 %NAV_BAR_BACKGROUND_TOP%);
+    border: 1px solid %NAV_BAR_BORDER%;
+	color:%NAV_BAR_TEXT%;
+}
+
+/* ---- NAVBAR ---- */
+QPushButton#pathBarButton{
+	background-color: %NAV_BAR_BUTTON_BACKGROUND%;
+	color:%NAV_BAR_BUTTON_TEXT%;
+	border:0px;
+	padding: 2px;
+}
+QPushButton#pathBarButton:hover{
+	background-color: %NAV_BAR_BUTTON_BACKGROUND_HOVER%;
+	color:%NAV_BAR_BUTTON_TEXT_HOVER%;
+	border:0px;
+	padding: 2px;
+}
+QLabel#navBarDelimiter{
+	background-color: %NAV_BAR_BUTTON_BACKGROUND%;
+	border:0px;
+}
+QScrollArea#pathbarscroll{
+    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                stop: 0 %NAV_BAR_BACKGROUND_BOTTOM%,
+								stop: 1.0 %NAV_BAR_BACKGROUND_TOP%);
+    border: 0px;
+}
+QScrollArea#pathbarscroll QScrollBar{
+	height: 8px;
+}
+
+/* ---- BUTTONS ---- */
+QPushButton#flatButton{
+	background-color: %FLAT_BUTTONS_BACKGROUND%;
+	border: 0px;
+	color: %FLAT_BUTTONS_TEXT%;
+}
+QPushButton#flatButton:hover{
+	background-color: %FLAT_BUTTONS_BACKGROUND_HOVER%;
+	border: 0px;
+	color: %FLAT_BUTTONS_TEXT%;
+}
+
+/* ---- ELEMENTS HEADER ---- */
+QFrame#header{
+	background-color: %HEADER_BACKGROUND%;
+}
+QLabel#headerLabel{
+	background-color: %HEADER_BACKGROUND%;
+	color: %HEADER_TEXT%;
+}
+QPushButton#headerButton{
+	background-color: %HEADER_BUTTON_BACKGROUND%;
+	border: 0px;
+}
+QPushButton#headerButton:hover{
+	background-color: %HEADER_BUTTON_BACKGROUND_HOVER%;
+	border: 0px;
+}
+
+/* ---- ELEMENTS ---- */
+
+QLabel#activityWidget {
+	background-color: transparent;
+	border: 0px;
+}
+
+QScrollArea#elementScroll{
+	background-color: %ELEMENTS_SCROLL_AREA_BACKGROUND%;
+	border: 0px;
+}
+QLabel#panelFolderLabel{
+	background-color: transparent;
+	color: %FOLDER_ELEMENT_TEXT%;
+}
+QFrame#panelFolder{
+	background-color: %FOLDER_ELEMENT_BACKGROUND%;
+	border: 0px;
+	color: %FOLDER_ELEMENT_TEXT%;
+}
+QFrame#panelFolder:hover{
+	background-color: %FOLDER_ELEMENT_BACKGROUND_HOVER%;
+	border: 0px;
+	color: %FOLDER_ELEMENT_TEXT%;
+}
+QLabel#panelFileLabel{
+	background-color: transparent;
+	color: %FILE_ELEMENT_TEXT%;
+}
+QFrame#panelFile{
+	background-color: %FILE_ELEMENT_BACKGROUND%;
+	border: 0px;
+	color: %FILE_ELEMENT_TEXT%;
+}
+QFrame#panelFile:hover{
+	background-color: %FILE_ELEMENT_BACKGROUND_HOVER%;
+	border: 0px;
+	color: %FILE_ELEMENT_TEXT%;
+}
+
+/* ---- POPUPS ---- */
+QMessageBox{
+	background-color: %BACKGROUND_BASE%;
+	color: %POPUP_TEXT%;
+}
+QMessageBox QFrame{
+	background-color: %BACKGROUND_BASE%;
+}
+QMessageBox QLabel {
+    color: %POPUP_TEXT%;
+	background-color:transparent;
+}
+QMessageBox QPushButton {
+    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                stop: 1.0 %BUTTONS_BACKGROUND_BOTTOM%,
+								stop: 0 %BUTTONS_BACKGROUND_TOP%);
+	border: 1px solid %BUTTONS_BORDER%;
+	color: %BUTTONS_TEXT%;
+}
+QMessageBox QPushButton:hover {
+    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                stop: 1.0 %BUTTONS_BACKGROUND_BOTTOM_HOVER%,
+								stop: 0 %BUTTONS_BACKGROUND_TOP_HOVER%);
+	border: 1px solid %BUTTONS_BORDER%;
+	color: %BUTTONS_TEXT%;
+}
+QMessageBox QPushButton:pressed {
+    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                stop: 1.0 %BUTTONS_BACKGROUND_BOTTOM_CLICKED%,
+								stop: 0 %BUTTONS_BACKGROUND_TOP_CLICKED%);
+	border: 1px solid %BUTTONS_BORDER%;
+	color: %BUTTONS_TEXT%;
+}
+
+/* ---- TEXT INPUT ---- */
+QTextEdit{
+	background-color: %BACKGROUND_SECONDARY%;
+	color: %TEXT_SECONDARY%;
+	border: 1px solid %BUTTONS_BORDER%;
+}
+
+/* ---- MENU ---- */
+QMenu{
+	background-color: %MENU_BACKGROUND_COLOR%;
+	color: %MENU_TEXT_COLOR%;
+}
+
+QMenu::item:selected:!disabled{
+	background-color: %MENU_ITEM_BACKGROUND_COLOR%;
+	color: %MENU_TEXT_COLOR%;
+}
+
+QMenu::separator {
+    height: 1px;
+    background: %MENU_SEPARATOR_COLOR%;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+QMenuBar{
+	background-color: %MENU_BACKGROUND_COLOR%;
+	color: %MENU_TEXT_COLOR%;
+	border: 1px solid black;
+}
+
+QMenuBar::item:selected{
+	background-color: %MENU_ITEM_BACKGROUND_COLOR%;
+    color: %MENU_TEXT_COLOR%;
+	border-bottom: 1px solid black;
+}
