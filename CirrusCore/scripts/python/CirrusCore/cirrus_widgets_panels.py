@@ -23,8 +23,6 @@ from CirrusCore import cirrus_plugin_parser
 reload(cirrus_plugin_parser)
 from CirrusCore.cirrus_connection import ConnectionInfos
 
-ICONS = os.path.dirname(__file__) + "\\icons\\"
-
 exe = sys.executable.split(os.sep)[-1].split('.')[0]
 IS_HOUDINI = exe in ["hindie", "houdinicore", "hescape", "houdinifx"]
 
@@ -155,23 +153,23 @@ class GetFileFromCloudButton(QtWidgets.QPushButton):
         self.state = state
 
         if state == cirrus_objects.FileState.CLOUD_ONLY:
-            self.setIcon(QtGui.QIcon(ICONS + "cloud_only.png"))
+            self.setIcon(cirrus_io.get_icon("cloud_only.png"))
             self.setToolTip("File saved on cloud only\nClick to download the latest version.")
 
         elif state == cirrus_objects.FileState.METADATA_DESYNC:
-            self.setIcon(QtGui.QIcon(ICONS + "cloud_meta_desync.png"))
+            self.setIcon(cirrus_io.get_icon("cloud_meta_desync.png"))
             self.setToolTip("Warning: metadata desyncronized or missing\nDownload the latest version of the file to refresh the metadata.")
 
         elif state == cirrus_objects.FileState.LOCAL_ONLY:
-            self.setIcon(QtGui.QIcon(ICONS + "cloud_close.png"))
+            self.setIcon(cirrus_io.get_icon("cloud_close.png"))
             self.setToolTip("File saved only locally\nClick on save button to save it on the cloud.")
 
         elif state == cirrus_objects.FileState.CLOUD_AND_LOCAL_NOT_LATEST:
-            self.setIcon(QtGui.QIcon(ICONS + "cloud_checkmark_not_latest.png"))
+            self.setIcon(cirrus_io.get_icon("cloud_checkmark_not_latest.png"))
             self.setToolTip("Local version of the file is not the latest\nClick to download the latest version.\nRight-click to get older versions.")
 
         else:
-            self.setIcon(QtGui.QIcon(ICONS + "cloud_checkmark.png"))
+            self.setIcon(cirrus_io.get_icon("cloud_checkmark.png"))
             self.setToolTip("File is up to date locally and on the cloud.\nRight-click to get older versions.")
 
 class PanelFolder(QtWidgets.QFrame):
@@ -198,7 +196,7 @@ class PanelFolder(QtWidgets.QFrame):
         self.ico.setFixedHeight(28)
         self.ico.setIconSize(QtCore.QSize(26,26))
         self.ico.setStyleSheet("background-color: transparent;border: 0px")
-        self.ico.setIcon(QtGui.QIcon(ICONS + "folder.svg"))
+        self.ico.setIcon(cirrus_io.get_icon("folder.svg"))
         self.main_layout.addWidget(self.ico)
         self.label = QtWidgets.QLabel(name)
         self.label.setObjectName("panelFolderLabel")
@@ -238,7 +236,7 @@ class PanelFileButtons(QtWidgets.QWidget):
 
         self.save_to_cloud_button = QtWidgets.QPushButton("")
         self.save_to_cloud_button.setObjectName("flatButton")
-        self.save_to_cloud_button.setIcon(QtGui.QIcon(ICONS + "cloud_save.png"))
+        self.save_to_cloud_button.setIcon(cirrus_io.get_icon("cloud_save.png"))
         self.save_to_cloud_button.setIconSize(QtCore.QSize(26, 26))
         self.save_to_cloud_button.setFixedSize(QtCore.QSize(28, 28))
         self.save_to_cloud_button.setToolTip("Press this button to save the file to the cloud\n"
@@ -256,7 +254,7 @@ class PanelFileButtons(QtWidgets.QWidget):
 
         self.lock_button = QtWidgets.QPushButton("")
         self.lock_button.setObjectName("flatButton")
-        self.lock_button.setIcon(QtGui.QIcon(ICONS + "notlocked.png"))
+        self.lock_button.setIcon(cirrus_io.get_icon("notlocked.png"))
         self.lock_button.setIconSize(QtCore.QSize(26, 26))
         self.lock_button.setFixedSize(QtCore.QSize(28, 28))
         self.lock_button.clicked.connect(self.lock_file)
@@ -264,7 +262,7 @@ class PanelFileButtons(QtWidgets.QWidget):
 
         self.infos_button = QtWidgets.QPushButton("")
         self.infos_button.setObjectName("flatButton")
-        self.infos_button.setIcon(QtGui.QIcon(ICONS + "info.svg"))
+        self.infos_button.setIcon(cirrus_io.get_icon("info.svg"))
         self.infos_button.setIconSize(QtCore.QSize(26, 26))
         self.infos_button.setFixedSize(QtCore.QSize(28, 28))
         self.infos_button.clicked.connect(self.open_infos)
@@ -275,7 +273,7 @@ class PanelFileButtons(QtWidgets.QWidget):
         self.refresh_button.setFixedSize(QtCore.QSize(28, 28))
         self.refresh_button.setObjectName("flatButton")
         self.refresh_button.setToolTip("Refresh current file metadata")
-        self.refresh_button.setIcon(QtGui.QIcon(ICONS + "reload.svg"))
+        self.refresh_button.setIcon(cirrus_io.get_icon("reload.svg"))
         self.refresh_button.clicked.connect(self.refresh_state)
         self.buttons_layout.addWidget(self.refresh_button)
 
@@ -324,19 +322,19 @@ class PanelFileButtons(QtWidgets.QWidget):
 
         if lock_user == "":
             self.is_locked = cirrus_objects.FileLockState.UNLOCKED
-            self.lock_button.setIcon(QtGui.QIcon(ICONS + "notlocked.png"))
+            self.lock_button.setIcon(cirrus_io.get_icon("notlocked.png"))
             self.lock_button.setToolTip("File not locked")
 
         elif lock_user == cirrus_objects.ObjectMetadata.get_user_uid():
             self.is_locked = cirrus_objects.FileLockState.SELF_LOCKED
-            self.lock_button.setIcon(QtGui.QIcon(ICONS + "lock_self.png"))
+            self.lock_button.setIcon(cirrus_io.get_icon("lock_self.png"))
             tooltip = ("File locked by: " + lock_user + '\n'
                        "Message: " + lock_message + '\n'
                        "Locked since: " + lock_time + "")
             self.lock_button.setToolTip(tooltip)
         else:
             self.is_locked = cirrus_objects.FileLockState.LOCKED
-            self.lock_button.setIcon(QtGui.QIcon(ICONS + "locked.png"))
+            self.lock_button.setIcon(cirrus_io.get_icon("locked.png"))
             tooltip = ("File locked by: " + lock_user + '\n'
                        "Message: " + lock_message + '\n'
                        "Locked since: " + lock_time + "")
@@ -415,11 +413,11 @@ class PanelFileButtons(QtWidgets.QWidget):
             tooltip = ("File locked by: " + m.get("user", "") + '\n'
                        "Message: " + m.get("lock_message", "No Message") + '\n'
                        "Locked since: " + m.get("lock_time", "No timestamp") + "")
-            self.lock_button.setIcon(QtGui.QIcon(ICONS + "lock_self.png"))
+            self.lock_button.setIcon(cirrus_io.get_icon("lock_self.png"))
             self.lock_button.setToolTip(tooltip)
         else:
             self.is_locked = cirrus_objects.FileLockState.UNLOCKED
-            self.lock_button.setIcon(QtGui.QIcon(ICONS + "notlocked.png"))
+            self.lock_button.setIcon(cirrus_io.get_icon("notlocked.png"))
             self.lock_button.setToolTip("File not locked")
 
         if self.panelfile.plugin:
@@ -468,7 +466,7 @@ class PanelFile(PanelFolder):
         file_extension = self.path.split('.')[-1]
         icon = ICONS + "file_types/" + file_extension + ".svg"
         if not os.path.exists(icon):
-            self.ico.setIcon(QtGui.QIcon(ICONS + "document.svg"))
+            self.ico.setIcon(cirrus_io.get_icon("document.svg"))
         else:
             self.ico.setIcon(QtGui.QIcon(icon))
         self.ico.setObjectName("fileIco")
@@ -579,7 +577,7 @@ class PanelFile(PanelFolder):
         self.activity_progress.setVisible(False)
         self.file_buttons.enable_buttons(True)
 
-        ico = QtGui.QIcon(ICONS + "cloud_checkmark.png")
+        ico = cirrus_io.get_icon("cloud_checkmark.png")
         self.file_buttons.is_on_cloud_button.setIcon(ico)
 
         self.file_buttons.refresh_state()
@@ -698,7 +696,7 @@ class Panel(QtWidgets.QFrame):
         self.ico = QtWidgets.QLabel("")
         self.ico.setFixedHeight(22)
         self.ico.setStyleSheet("background-color: transparent")
-        self.ico.setPixmap(QtGui.QIcon(ICONS + "folder_open.svg").pixmap(28, 28))
+        self.ico.setPixmap(cirrus_io.get_icon("folder_open.svg").pixmap(28, 28))
 
         self.header_layout.addWidget(self.ico)
         lbl = QtWidgets.QLabel(panel_name.split('/')[-1])
@@ -717,7 +715,7 @@ class Panel(QtWidgets.QFrame):
         self.refresh_button.setObjectName("headerButton")
         self.refresh_button.clicked.connect(lambda: self.init_fetching(reset=True))
         self.refresh_button.setToolTip("Refresh current folder state")
-        self.refresh_button.setIcon(QtGui.QIcon(ICONS + "reload.svg"))
+        self.refresh_button.setIcon(cirrus_io.get_icon("reload.svg"))
         self.header_layout.addWidget(self.refresh_button)
         self.header.setLayout(self.header_layout)
         self.main_layout.addWidget(self.header)

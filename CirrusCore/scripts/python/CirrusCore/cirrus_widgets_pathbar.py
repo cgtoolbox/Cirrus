@@ -14,8 +14,6 @@ reload(cirrus_config)
 
 from CirrusCore.cirrus_connection import ConnectionInfos
 
-ICONS = os.path.dirname(__file__) + "\\icons\\"
-
 exe = sys.executable.split(os.sep)[-1].split('.')[0]
 IS_HOUDINI = exe in ["hindie", "houdinicore", "hescape", "houdinifx"]
 
@@ -29,7 +27,7 @@ class PathBarDelimiter(QtWidgets.QLabel):
         self.setFixedHeight(24)
         self.setFixedWidth(24)
         self.setContentsMargins(0, 0, 0, 0)
-        self.setPixmap(QtGui.QIcon(ICONS + "pathbar_delimiter.png").pixmap(22,22))
+        self.setPixmap(cirrus_io.get_icon("pathbar_delimiter.png").pixmap(22,22))
 
 class PathBarButton(QtWidgets.QPushButton):
 

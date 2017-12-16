@@ -1,3 +1,4 @@
+import hou
 import os
 import datetime
 import json
@@ -11,7 +12,17 @@ reload(cirrus_objects)
 from CirrusCore.cirrus_connection import ConnectionInfos
 from CirrusCore.cirrus_config import Config
 
+from PySide2 import QtGui
+
 import botocore
+
+def get_icon(icon_name):
+
+    try:
+        return hou.ui.createQtIcon("Cirrus" + os.sep + icon_name)
+    except hou.OperationFailed:
+        return QtGui.QIcon()
+
 
 def get_object_key(object_path):
     """ Convert a local file path to a on cloud object key

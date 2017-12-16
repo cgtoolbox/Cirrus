@@ -15,9 +15,11 @@ reload(cirrus_plugin_settings)
 from CirrusCore import py_highlighter
 reload(py_highlighter)
 
+from CirrusCore import cirrus_io
+reload(cirrus_io)
+
 from CirrusCore.cirrus_logger import Logger
 
-ICONS = os.path.dirname(__file__) + "\\icons\\"
 PLUGINS_FOLDER = os.path.dirname(__file__) + "\\plugins\\"
 
 class MethodListModel(QtCore.QAbstractListModel):
@@ -48,14 +50,14 @@ class MethodListModel(QtCore.QAbstractListModel):
         if role == QtCore.Qt.DecorationRole:
 
             if val == "Create":
-                ico = QtGui.QIcon(ICONS + "add.svg")
+                ico = cirrus_io.get_icon("add.svg")
                 return ico
 
             if val == "None":
-                ico = QtGui.QIcon(ICONS + "close.svg")
+                ico = cirrus_io.get_icon("close.svg")
                 return ico
 
-            ico = QtGui.QIcon(ICONS + "arrow_right.svg")
+            ico = cirrus_io.get_icon(""arrow_right.svg")
             return ico
 
         if role == QtCore.Qt.DisplayRole:
@@ -116,7 +118,7 @@ class PluginEntries(QtWidgets.QWidget):
         self._removing_plugin = False
         self.plugins_combo = QtWidgets.QComboBox()
         self.plugins_combo.addItems(self.plugin_names)
-        self.plugins_combo.addItem(QtGui.QIcon(ICONS + "add.svg"), "Create")
+        self.plugins_combo.addItem(cirrus_io.get_icon("add.svg"), "Create")
 
         main_layout.addWidget(self.plugins_combo)
 
@@ -128,7 +130,7 @@ class PluginEntries(QtWidgets.QWidget):
         add_cur_exe_btn = QtWidgets.QPushButton("")
         add_cur_exe_btn.setFixedHeight(32)
         add_cur_exe_btn.setFixedWidth(32)
-        add_cur_exe_btn.setIcon(QtGui.QIcon(ICONS + "down.svg"))
+        add_cur_exe_btn.setIcon(cirrus_io.get_icon("down.svg"))
         add_cur_exe_btn.setIconSize(QtCore.QSize(25, 25))
         add_cur_exe_btn.setToolTip("Add current running executable to the list")
         add_cur_exe_btn.clicked.connect(self.add_cur_exec)
@@ -137,7 +139,7 @@ class PluginEntries(QtWidgets.QWidget):
         remove_plugin_btn = QtWidgets.QPushButton("")
         remove_plugin_btn.setFixedHeight(32)
         remove_plugin_btn.setFixedWidth(32)
-        remove_plugin_btn.setIcon(QtGui.QIcon(ICONS + "close.svg"))
+        remove_plugin_btn.setIcon(cirrus_io.get_icon("close.svg"))
         remove_plugin_btn.setIconSize(QtCore.QSize(25, 25))
         remove_plugin_btn.setToolTip("Remove selected plugin")
         remove_plugin_btn.clicked.connect(self.remove_plugin)
@@ -368,7 +370,7 @@ class _OnIconMenuEntry(QtWidgets.QWidget):
         main_layout.addWidget(self.name_input)
 
         a = QtWidgets.QLabel("")
-        a.setPixmap(QtGui.QIcon(ICONS + "arrow_right.svg").pixmap(22, 22))
+        a.setPixmap(cirrus_io.get_icon("arrow_right.svg").pixmap(22, 22))
         main_layout.addWidget(a)
 
         self.method_input = QtWidgets.QComboBox()
@@ -378,7 +380,7 @@ class _OnIconMenuEntry(QtWidgets.QWidget):
         main_layout.addWidget(self.method_input)
 
         del_btn = QtWidgets.QPushButton("")
-        del_btn.setIcon(QtGui.QIcon(ICONS + "close.svg"))
+        del_btn.setIcon(cirrus_io.get_icon("close.svg"))
         del_btn.setFixedWidth(22)
         del_btn.setFixedHeight(22)
         del_btn.setFlat(True)
@@ -416,7 +418,7 @@ class MethodDeletionWarning(QtWidgets.QDialog):
         sub_layout.setAlignment(QtCore.Qt.AlignLeft)
 
         risk = QtWidgets.QLabel("")
-        risk.setPixmap(QtGui.QIcon(ICONS + "risk.svg").pixmap(64, 64))
+        risk.setPixmap(cirrus_io.get_icon("risk.svg").pixmap(64, 64))
         risk.setFixedWidth(64)
         risk.setFixedHeight(64)
         sub_layout.addWidget(risk)
@@ -433,7 +435,7 @@ class MethodDeletionWarning(QtWidgets.QDialog):
             
             _lbl = QtWidgets.QLabel("")
             _lbl.setContentsMargins(15, 0, 0, 0)
-            _lbl.setPixmap(QtGui.QIcon(ICONS + "white_list.svg").pixmap(24, 24))
+            _lbl.setPixmap(cirrus_io.get_icon("white_list.svg").pixmap(24, 24))
             _lbl.setFixedWidth(39)
 
             _lay.addWidget(_lbl)
@@ -445,7 +447,7 @@ class MethodDeletionWarning(QtWidgets.QDialog):
             
             _lbl2 = QtWidgets.QLabel("")
             _lbl2.setContentsMargins(30, 0, 0, 0)
-            _lbl2.setPixmap(QtGui.QIcon(ICONS + "arrow_right.svg").pixmap(16, 16))
+            _lbl2.setPixmap(cirrus_io.get_icon("arrow_right.svg").pixmap(16, 16))
             _lbl2.setFixedWidth(46)
 
             _lay2.addWidget(_lbl2)
@@ -459,13 +461,13 @@ class MethodDeletionWarning(QtWidgets.QDialog):
 
         btn_layout = QtWidgets.QHBoxLayout()
         self.accept_btn = QtWidgets.QPushButton("Yes, Delete Method")
-        self.accept_btn.setIcon(QtGui.QIcon(ICONS + "checkmark.svg"))
+        self.accept_btn.setIcon(cirrus_io.get_icon("checkmark.svg"))
         self.accept_btn.setIconSize(QtCore.QSize(26, 26))
         self.accept_btn.clicked.connect(self.valid_act)
         btn_layout.addWidget(self.accept_btn)
 
         self.cancel_btn = QtWidgets.QPushButton("Cancel")
-        self.cancel_btn.setIcon(QtGui.QIcon(ICONS + "close.svg"))
+        self.cancel_btn.setIcon(cirrus_io.get_icon("close.svg"))
         self.cancel_btn.setIconSize(QtCore.QSize(26, 26))
         self.cancel_btn.clicked.connect(self.close)
         btn_layout.addWidget(self.cancel_btn)
@@ -503,13 +505,13 @@ class FileBindingsInput(QtWidgets.QDialog):
         btn_layout = QtWidgets.QHBoxLayout()
 
         valid_btn = QtWidgets.QPushButton("Ok")
-        valid_btn.setIcon(QtGui.QIcon(ICONS + "checkmark.svg"))
+        valid_btn.setIcon(cirrus_io.get_icon("checkmark.svg"))
         valid_btn.setIconSize(QtCore.QSize(22, 22))
         valid_btn.clicked.connect(self.valid)
         btn_layout.addWidget(valid_btn)
 
         cancel_btn = QtWidgets.QPushButton("Cancel")
-        cancel_btn.setIcon(QtGui.QIcon(ICONS + "close.svg"))
+        cancel_btn.setIcon(cirrus_io.get_icon("close.svg"))
         cancel_btn.setIconSize(QtCore.QSize(22, 22))
         cancel_btn.clicked.connect(self.close)
         btn_layout.addWidget(cancel_btn)
@@ -577,14 +579,14 @@ class PluginInfos(QtWidgets.QWidget):
 
         self.file_bindings_combo = QtWidgets.QComboBox()
         self.file_bindings_combo.addItems([v for v in self.bindings.iterkeys()])
-        self.file_bindings_combo.addItem(QtGui.QIcon(ICONS + "add.svg"), "Create")
+        self.file_bindings_combo.addItem(cirrus_io.get_icon("add.svg"), "Create")
         self.file_bindings_combo.currentIndexChanged.connect(self.update_selected_binding)
         self.file_bindings_lay.addWidget(self.file_bindings_combo)
         
         edit_files_btn = QtWidgets.QPushButton("")
         edit_files_btn.setFixedHeight(32)
         edit_files_btn.setFixedWidth(32)
-        edit_files_btn.setIcon(QtGui.QIcon(ICONS + "edit.svg"))
+        edit_files_btn.setIcon(cirrus_io.get_icon("edit.svg"))
         edit_files_btn.setIconSize(QtCore.QSize(25, 25))
         edit_files_btn.setToolTip("Edit files list")
         edit_files_btn.clicked.connect(self.edit_file_bindings)
@@ -593,7 +595,7 @@ class PluginInfos(QtWidgets.QWidget):
         delete_files_bindings_btn = QtWidgets.QPushButton("")
         delete_files_bindings_btn.setFixedHeight(32)
         delete_files_bindings_btn.setFixedWidth(32)
-        delete_files_bindings_btn.setIcon(QtGui.QIcon(ICONS + "close.svg"))
+        delete_files_bindings_btn.setIcon(cirrus_io.get_icon("close.svg"))
         delete_files_bindings_btn.setIconSize(QtCore.QSize(25, 25))
         delete_files_bindings_btn.setToolTip("Delete selected files binding.")
         delete_files_bindings_btn.clicked.connect(self.delete_files_binding)
@@ -606,10 +608,10 @@ class PluginInfos(QtWidgets.QWidget):
         actions_lay.addWidget(QtWidgets.QLabel("Action:"))
 
         self.actions_combo = QtWidgets.QComboBox()
-        self.actions_combo.addItem(QtGui.QIcon(ICONS + "cloud_checkmark.png"), "On Get")
-        self.actions_combo.addItem(QtGui.QIcon(ICONS + "cloud_save.png"), "On Save")
-        self.actions_combo.addItem(QtGui.QIcon(ICONS + "lock_self.png"), "On Lock")
-        self.actions_combo.addItem(QtGui.QIcon(ICONS + "txt.svg"), "On Icon Clicked")
+        self.actions_combo.addItem(cirrus_io.get_icon("cloud_checkmark.png"), "On Get")
+        self.actions_combo.addItem(cirrus_io.get_icon("cloud_save.png"), "On Save")
+        self.actions_combo.addItem(cirrus_io.get_icon("lock_self.png"), "On Lock")
+        self.actions_combo.addItem(cirrus_io.get_icon("txt.svg"), "On Icon Clicked")
         self.actions_combo.currentIndexChanged.connect(self.update_selected_action)
         actions_lay.addWidget(self.actions_combo)
         
@@ -647,7 +649,7 @@ class PluginInfos(QtWidgets.QWidget):
         apply_method_btn = QtWidgets.QPushButton("")
         apply_method_btn.setFixedHeight(32)
         apply_method_btn.setFixedWidth(32)
-        apply_method_btn.setIcon(QtGui.QIcon(ICONS + "publish.svg"))
+        apply_method_btn.setIcon(cirrus_io.get_icon("publish.svg"))
         apply_method_btn.setIconSize(QtCore.QSize(25, 25))
         apply_method_btn.setToolTip("Apply method to selected action.")
         apply_method_btn.clicked.connect(self.apply_method)
@@ -656,7 +658,7 @@ class PluginInfos(QtWidgets.QWidget):
         save_method_code_btn = QtWidgets.QPushButton("")
         save_method_code_btn.setFixedHeight(32)
         save_method_code_btn.setFixedWidth(32)
-        save_method_code_btn.setIcon(QtGui.QIcon(ICONS + "save.svg"))
+        save_method_code_btn.setIcon(cirrus_io.get_icon("save.svg"))
         save_method_code_btn.setIconSize(QtCore.QSize(25, 25))
         save_method_code_btn.setToolTip("Save method code.")
         save_method_code_btn.clicked.connect(self.save_method_code)
@@ -665,7 +667,7 @@ class PluginInfos(QtWidgets.QWidget):
         delete_method_btn = QtWidgets.QPushButton("")
         delete_method_btn.setFixedHeight(32)
         delete_method_btn.setFixedWidth(32)
-        delete_method_btn.setIcon(QtGui.QIcon(ICONS + "close.svg"))
+        delete_method_btn.setIcon(cirrus_io.get_icon("close.svg"))
         delete_method_btn.setIconSize(QtCore.QSize(25, 25))
         delete_method_btn.setToolTip("Delete method.")
         delete_method_btn.clicked.connect(self.delete_method)
@@ -678,7 +680,7 @@ class PluginInfos(QtWidgets.QWidget):
         self.methods_combo.currentIndexChanged.connect(self.update_selected_method)
 
         self.save_plugin_btn = QtWidgets.QPushButton("Save Current Plugin")
-        self.save_plugin_btn.setIcon(QtGui.QIcon(ICONS + "save.svg"))
+        self.save_plugin_btn.setIcon(cirrus_io.get_icon("save.svg"))
         self.save_plugin_btn.setIconSize(QtCore.QSize(22, 22))
         self.save_plugin_btn.clicked.connect(self.save_plugin)
         self.main_layout.addWidget(self.save_plugin_btn)
@@ -1083,7 +1085,7 @@ class PluginManager(QtWidgets.QMainWindow):
 
         self.setProperty("houdiniStyle", True)
         self.setWindowTitle("Plugin Manager")
-        self.setWindowIcon(QtGui.QIcon(ICONS + "plugin.svg"))
+        self.setWindowIcon(cirrus_io.get_icon("plugin.svg"))
 
         self.plugins = {}
 

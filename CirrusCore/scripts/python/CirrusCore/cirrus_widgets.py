@@ -27,8 +27,6 @@ from CirrusCore.cirrus_connection import init_connection
 from CirrusCore import cirrus_io
 reload(cirrus_io)
 
-ICONS = os.path.dirname(__file__) + "\\icons\\"
-
 exe = sys.executable.split(os.sep)[-1].split('.')[0]
 IS_HOUDINI = exe in ["hindie", "houdinicore", "hescape", "houdinifx"]
 
@@ -46,7 +44,7 @@ class ProjectSelector(QtWidgets.QWidget):
         
         self.open_project_button = QtWidgets.QPushButton(" Open a project")
         self.open_project_button.setIconSize(QtCore.QSize(64, 64))
-        self.open_project_button.setIcon(QtGui.QIcon(ICONS + "folder_open.svg"))
+        self.open_project_button.setIcon(cirrus_io.get_icon("folder_open.svg"))
         self.open_project_button.clicked.connect(self.main_ui.init_root)
         self.open_project_button.setFlat(True)
         self.open_project_button.setStyleSheet("""QPushButton{background-color: transparent}
@@ -96,7 +94,7 @@ class ProjectGetter(QtWidgets.QMainWindow):
         self.mainui = parent
 
         self.setWindowTitle("Get Project From Cloud")
-        self.setWindowIcon(QtGui.QIcon(ICONS + "inbox.svg"))
+        self.setWindowIcon(cirrus_io.get_icon("inbox.svg"))
         self.setFixedHeight(170)
         
         init_connection()
@@ -150,12 +148,12 @@ class ProjectGetter(QtWidgets.QMainWindow):
 
         self.start_btn = QtWidgets.QPushButton("Start")
         self.start_btn.setIconSize(QtCore.QSize(32, 32))
-        self.start_btn.setIcon(QtGui.QIcon(ICONS + "checkmark.svg"))
+        self.start_btn.setIcon(cirrus_io.get_icon("checkmark.svg"))
         self.start_btn.clicked.connect(self.start_download)
 
         self.cancel_btn = QtWidgets.QPushButton("Cancel")
         self.cancel_btn.setIconSize(QtCore.QSize(32, 32))
-        self.cancel_btn.setIcon(QtGui.QIcon(ICONS + "close.svg"))
+        self.cancel_btn.setIcon(cirrus_io.get_icon("close.svg"))
         self.cancel_btn.setVisible(False)
         self.cancel_btn.clicked.connect(self.cancel_download)
 
@@ -313,14 +311,14 @@ class MainWidget(QtWidgets.QFrame):
         self.file_menu = self.main_menu.addMenu("File")
 
         self.open_proj_act = QtWidgets.QAction("Open a project", self)
-        self.open_proj_act.setIcon(QtGui.QIcon(ICONS + "folder_open.svg"))
+        self.open_proj_act.setIcon(cirrus_io.get_icon("folder_open.svg"))
         self.open_proj_act.triggered.connect(self.init_root)
         self.close_proj_act = QtWidgets.QAction("Close Project", self)
-        self.close_proj_act.setIcon(QtGui.QIcon(ICONS + "close.svg"))
+        self.close_proj_act.setIcon(cirrus_io.get_icon("close.svg"))
         self.close_proj_act.triggered.connect(self.close_project)
         self.download_proj_act = QtWidgets.QAction("Download a project", self)
         self.download_proj_act.triggered.connect(self.get_project)
-        self.download_proj_act.setIcon(QtGui.QIcon(ICONS + "inbox.svg"))
+        self.download_proj_act.setIcon(cirrus_io.get_icon("inbox.svg"))
         self.file_menu.addAction(self.open_proj_act)
         self.file_menu.addAction(self.close_proj_act)
         self.file_menu.addAction(self.download_proj_act)
@@ -330,11 +328,11 @@ class MainWidget(QtWidgets.QFrame):
         self.options_menu.addAction(self.auto_check_state_act)
         self.options_menu.addSeparator()
         self.open_plug_manager_act = QtWidgets.QAction("Plugin Manager", self)
-        self.open_plug_manager_act.setIcon(QtGui.QIcon(ICONS + "plugin.svg"))
+        self.open_plug_manager_act.setIcon(cirrus_io.get_icon("plugin.svg"))
         self.open_plug_manager_act.triggered.connect(self.open_plugin_manager)
         self.options_menu.addAction(self.open_plug_manager_act)
         self.refresh_plugins_act = QtWidgets.QAction("Refresh Plugins", self)
-        self.refresh_plugins_act.setIcon(QtGui.QIcon(ICONS + "reload.svg"))
+        self.refresh_plugins_act.setIcon(cirrus_io.get_icon("reload.svg"))
         self.refresh_plugins_act.triggered.connect(self.refresh_plugins)
         self.options_menu.addAction(self.refresh_plugins_act)
         

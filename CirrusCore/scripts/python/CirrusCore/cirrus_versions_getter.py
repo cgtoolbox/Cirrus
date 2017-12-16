@@ -179,7 +179,7 @@ class VersionPicker(QtWidgets.QDialog):
         get_btn = QtWidgets.QPushButton("")
         get_btn.setFlat(True)
         get_btn.setStyleSheet("""QPushButton{background: transparent}""")
-        get_btn.setIcon(QtGui.QIcon(ICONS + "download.svg"))
+        get_btn.setIcon(cirrus_io.get_icon("download.svg"))
         
         
         get_btn.setIconSize(QtCore.QSize(26,26))

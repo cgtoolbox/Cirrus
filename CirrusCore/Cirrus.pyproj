@@ -5,161 +5,163 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{b4c6d7d7-e4ee-40c9-bda8-92dec16e4974}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>main.py</StartupFile>
-    <SearchPath>..\..\</SearchPath>
+    <StartupFile>scripts\python\CirrusCore\main.py</StartupFile>
+    <SearchPath>..\..\;scripts\python</SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <ProjectTypeGuids>{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
-    <InterpreterId>{a7e3a1eb-5ab6-4f1e-8fe1-b73cebc0fced}</InterpreterId>
-    <InterpreterVersion>2.7</InterpreterVersion>
     <IsWindowsApplication>True</IsWindowsApplication>
     <Name>Cirrus</Name>
+    <InterpreterId>Global|VisualStudio|HouPy_16_5_323</InterpreterId>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
   <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
   <PropertyGroup>
     <VisualStudioVersion Condition=" '$(VisualStudioVersion)' == '' ">10.0</VisualStudioVersion>
-    <PtvsTargetsFile>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets</PtvsTargetsFile>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="cirrus_config.py">
+    <Compile Include="scripts\python\CirrusCore\cirrus_config.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="cirrus_connection.py">
+    <Compile Include="scripts\python\CirrusCore\cirrus_connection.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="cirrus_io.py" />
-    <Compile Include="cirrus_logger.py">
+    <Compile Include="scripts\python\CirrusCore\cirrus_io.py" />
+    <Compile Include="scripts\python\CirrusCore\cirrus_logger.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="cirrus_objects.py">
+    <Compile Include="scripts\python\CirrusCore\cirrus_objects.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="cirrus_plugin_errors.py">
+    <Compile Include="scripts\python\CirrusCore\cirrus_plugin_errors.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="cirrus_plugin_manager.py">
+    <Compile Include="scripts\python\CirrusCore\cirrus_plugin_manager.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="cirrus_plugin_parser.py">
+    <Compile Include="scripts\python\CirrusCore\cirrus_plugin_parser.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="cirrus_plugin_settings.py">
+    <Compile Include="scripts\python\CirrusCore\cirrus_plugin_settings.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="cirrus_threading.py">
+    <Compile Include="scripts\python\CirrusCore\cirrus_threading.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="cirrus_versions_getter.py">
+    <Compile Include="scripts\python\CirrusCore\cirrus_versions_getter.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="cirrus_widgets.py">
+    <Compile Include="scripts\python\CirrusCore\cirrus_widgets.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="cirrus_widgets_inputs.py">
+    <Compile Include="scripts\python\CirrusCore\cirrus_widgets_inputs.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="cirrus_widgets_panels.py">
+    <Compile Include="scripts\python\CirrusCore\cirrus_widgets_panels.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="cirrus_widgets_pathbar.py">
+    <Compile Include="scripts\python\CirrusCore\cirrus_widgets_pathbar.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="main.py">
+    <Compile Include="scripts\python\CirrusCore\main.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="plugins\houdini.py">
+    <Compile Include="scripts\python\CirrusPlugins\houdini.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="plugins\__init__.py">
+    <Compile Include="scripts\python\CirrusPlugins\__init__.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="py_highlighter.py">
+    <Compile Include="scripts\python\CirrusCore\py_highlighter.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="__init__.py" />
+    <Compile Include="scripts\python\CirrusCore\__init__.py" />
   </ItemGroup>
   <ItemGroup>
-    <InterpreterReference Include="{a7e3a1eb-5ab6-4f1e-8fe1-b73cebc0fced}\2.7" />
+    <InterpreterReference Include="Global|VisualStudio|HouPy_16_5_323" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="icons\" />
-    <Folder Include="icons\file_types\" />
-    <Folder Include="stylesheets\" />
-    <Folder Include="plugins\" />
+    <Folder Include="config\Icons\" />
+    <Folder Include="config\Icons\Cirrus\" />
+    <Folder Include="D:\__dev__\HoudiniPythonTools\Cirrus\CirrusCore\config\Icons\Cirrus\file_types\" />
+    <Folder Include="config\" />
+    <Folder Include="scripts\" />
+    <Folder Include="scripts\python\" />
+    <Folder Include="scripts\python\CirrusCore\" />
+    <Folder Include="D:\__dev__\HoudiniPythonTools\Cirrus\CirrusCore\scripts\python\CirrusCore\stylesheets\" />
+    <Folder Include="D:\__dev__\HoudiniPythonTools\Cirrus\CirrusCore\scripts\python\CirrusPlugins\" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include=".pylintrc" />
-    <Content Include="config.ini" />
-    <Content Include="icons\add.svg" />
-    <Content Include="icons\arrow_down.svg" />
-    <Content Include="icons\arrow_left.svg" />
-    <Content Include="icons\arrow_right.svg" />
-    <Content Include="icons\arrow_up.svg" />
-    <Content Include="icons\checkmark.svg" />
-    <Content Include="icons\close.svg" />
-    <Content Include="icons\cloud.svg" />
-    <Content Include="icons\cloud_checkmark.png" />
-    <Content Include="icons\cloud_checkmark_not_latest.png" />
-    <Content Include="icons\cloud_close.png" />
-    <Content Include="icons\cloud_down.png" />
-    <Content Include="icons\cloud_lock_closed.png" />
-    <Content Include="icons\cloud_meta_desync.png" />
-    <Content Include="icons\cloud_only.png" />
-    <Content Include="icons\cloud_save.png" />
-    <Content Include="icons\cloud_up.png" />
-    <Content Include="icons\cloud_warning.png" />
-    <Content Include="icons\database.svg" />
-    <Content Include="icons\document.svg" />
-    <Content Include="icons\down.svg" />
-    <Content Include="icons\download.gif" />
-    <Content Include="icons\download.svg" />
-    <Content Include="icons\edit.svg" />
-    <Content Include="icons\file_types\3ds.svg" />
-    <Content Include="icons\file_types\bgeo.svg" />
-    <Content Include="icons\file_types\hda.svg" />
-    <Content Include="icons\file_types\hdalc.svg" />
-    <Content Include="icons\file_types\hdanc.svg" />
-    <Content Include="icons\file_types\hip.svg" />
-    <Content Include="icons\file_types\hiplc.svg" />
-    <Content Include="icons\file_types\hipnc.svg" />
-    <Content Include="icons\file_types\ies.svg" />
-    <Content Include="icons\file_types\ma.svg" />
-    <Content Include="icons\file_types\max.svg" />
-    <Content Include="icons\file_types\mb.svg" />
-    <Content Include="icons\file_types\obj.svg" />
-    <Content Include="icons\file_types\otl.svg" />
-    <Content Include="icons\file_types\otllc.svg" />
-    <Content Include="icons\file_types\otlnc.svg" />
-    <Content Include="icons\file_types\txt.svg" />
-    <Content Include="icons\folder.svg" />
-    <Content Include="icons\folder_open.svg" />
-    <Content Include="icons\inbox.svg" />
-    <Content Include="icons\info.svg" />
-    <Content Include="icons\loading.gif" />
-    <Content Include="icons\locked.png" />
-    <Content Include="icons\lock_self.png" />
-    <Content Include="icons\notlocked.png" />
-    <Content Include="icons\open_root.svg" />
-    <Content Include="icons\pathbar_delimiter.png" />
-    <Content Include="icons\plugin.svg" />
-    <Content Include="icons\publish.svg" />
-    <Content Include="icons\refresh.svg" />
-    <Content Include="icons\reload.svg" />
-    <Content Include="icons\risk.svg" />
-    <Content Include="icons\root.svg" />
-    <Content Include="icons\save.svg" />
-    <Content Include="icons\select_object.svg" />
-    <Content Include="icons\treasure_chest.svg" />
-    <Content Include="icons\txt.svg" />
-    <Content Include="icons\upload.gif" />
-    <Content Include="icons\vault.svg" />
-    <Content Include="icons\white_list.svg" />
-    <Content Include="plugins\plugin_settings.json" />
-    <Content Include="stylesheets\colors_dark.inf" />
-    <Content Include="stylesheets\style.stylesheet" />
+    <Content Include="scripts\python\CirrusCore\.pylintrc" />
+    <Content Include="scripts\python\CirrusCore\config.ini" />
+    <Content Include="config\Icons\Cirrus\add.svg" />
+    <Content Include="config\Icons\Cirrus\arrow_down.svg" />
+    <Content Include="config\Icons\Cirrus\arrow_left.svg" />
+    <Content Include="config\Icons\Cirrus\arrow_right.svg" />
+    <Content Include="config\Icons\Cirrus\arrow_up.svg" />
+    <Content Include="config\Icons\Cirrus\checkmark.svg" />
+    <Content Include="config\Icons\Cirrus\close.svg" />
+    <Content Include="config\Icons\Cirrus\cloud.svg" />
+    <Content Include="config\Icons\Cirrus\cloud_checkmark.png" />
+    <Content Include="config\Icons\Cirrus\cloud_checkmark_not_latest.png" />
+    <Content Include="config\Icons\Cirrus\cloud_close.png" />
+    <Content Include="config\Icons\Cirrus\cloud_down.png" />
+    <Content Include="config\Icons\Cirrus\cloud_lock_closed.png" />
+    <Content Include="config\Icons\Cirrus\cloud_meta_desync.png" />
+    <Content Include="config\Icons\Cirrus\cloud_only.png" />
+    <Content Include="config\Icons\Cirrus\cloud_save.png" />
+    <Content Include="config\Icons\Cirrus\cloud_up.png" />
+    <Content Include="config\Icons\Cirrus\cloud_warning.png" />
+    <Content Include="config\Icons\Cirrus\database.svg" />
+    <Content Include="config\Icons\Cirrus\document.svg" />
+    <Content Include="config\Icons\Cirrus\down.svg" />
+    <Content Include="config\Icons\Cirrus\download.gif" />
+    <Content Include="config\Icons\Cirrus\download.svg" />
+    <Content Include="config\Icons\Cirrus\edit.svg" />
+    <Content Include="config\Icons\Cirrus\file_types\3ds.svg" />
+    <Content Include="config\Icons\Cirrus\file_types\bgeo.svg" />
+    <Content Include="config\Icons\Cirrus\file_types\hda.svg" />
+    <Content Include="config\Icons\Cirrus\file_types\hdalc.svg" />
+    <Content Include="config\Icons\Cirrus\file_types\hdanc.svg" />
+    <Content Include="config\Icons\Cirrus\file_types\hip.svg" />
+    <Content Include="config\Icons\Cirrus\file_types\hiplc.svg" />
+    <Content Include="config\Icons\Cirrus\file_types\hipnc.svg" />
+    <Content Include="config\Icons\Cirrus\file_types\ies.svg" />
+    <Content Include="config\Icons\Cirrus\file_types\ma.svg" />
+    <Content Include="config\Icons\Cirrus\file_types\max.svg" />
+    <Content Include="config\Icons\Cirrus\file_types\mb.svg" />
+    <Content Include="config\Icons\Cirrus\file_types\obj.svg" />
+    <Content Include="config\Icons\Cirrus\file_types\otl.svg" />
+    <Content Include="config\Icons\Cirrus\file_types\otllc.svg" />
+    <Content Include="config\Icons\Cirrus\file_types\otlnc.svg" />
+    <Content Include="config\Icons\Cirrus\file_types\txt.svg" />
+    <Content Include="config\Icons\Cirrus\folder.svg" />
+    <Content Include="config\Icons\Cirrus\folder_open.svg" />
+    <Content Include="config\Icons\Cirrus\inbox.svg" />
+    <Content Include="config\Icons\Cirrus\info.svg" />
+    <Content Include="config\Icons\Cirrus\loading.gif" />
+    <Content Include="config\Icons\Cirrus\locked.png" />
+    <Content Include="config\Icons\Cirrus\lock_self.png" />
+    <Content Include="config\Icons\Cirrus\notlocked.png" />
+    <Content Include="config\Icons\Cirrus\open_root.svg" />
+    <Content Include="config\Icons\Cirrus\pathbar_delimiter.png" />
+    <Content Include="config\Icons\Cirrus\plugin.svg" />
+    <Content Include="config\Icons\Cirrus\publish.svg" />
+    <Content Include="config\Icons\Cirrus\refresh.svg" />
+    <Content Include="config\Icons\Cirrus\reload.svg" />
+    <Content Include="config\Icons\Cirrus\risk.svg" />
+    <Content Include="config\Icons\Cirrus\root.svg" />
+    <Content Include="config\Icons\Cirrus\save.svg" />
+    <Content Include="config\Icons\Cirrus\select_object.svg" />
+    <Content Include="config\Icons\Cirrus\treasure_chest.svg" />
+    <Content Include="config\Icons\Cirrus\txt.svg" />
+    <Content Include="config\Icons\Cirrus\upload.gif" />
+    <Content Include="config\Icons\Cirrus\vault.svg" />
+    <Content Include="config\Icons\Cirrus\white_list.svg" />
+    <Content Include="scripts\python\CirrusPlugins\plugin_settings.json" />
+    <Content Include="scripts\python\CirrusCore\stylesheets\colors_dark.inf" />
+    <Content Include="scripts\python\CirrusCore\stylesheets\style.stylesheet" />
   </ItemGroup>
-  <Import Project="$(PtvsTargetsFile)" Condition="Exists($(PtvsTargetsFile))" />
-  <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="!Exists($(PtvsTargetsFile))" />
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
 </Project>
