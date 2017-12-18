@@ -13,4 +13,4 @@ This allows you for instance to reload a geometry after getting a new version, r
 
 This tool is designed to work with Amazon S3 system but the in / out interface is one python file, which can be changed to use another cloud provider as long as they have python API available.
 
-More infos: http://guillaumejobst.blogspot.fr/2017/06/versioning-control-over-cloud-embedded.html
+More infos: http://cgtoolbox.com/rnd-tools/cirrus-versioning-tool/ 
